@@ -1,0 +1,154 @@
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { Menu, X, ShoppingCart, User, HeartPulse } from 'lucide-react';
+import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
+import './Navbar.css';
+
+import logo from '../../assets/new_balan_logo.png';
+
+const Navbar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const { cart } = useCart();
+  const { user, isAuthenticated } = useAuth();
+  const location = useLocation();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const navLinks = [
+    { name: 'Home', path: '/' },
+    { name: 'Clinic', path: '/clinic' },
+    { name: 'Pharmacy', path: '/pharmacy' },
+    { name: 'Insurance', path: '/insurance' },
+    { name: 'Polyclinic', path: '/polyclinic' },
+    { name: 'About', path: '/about' },
+  ];
+
+  const isActive = (path) => location.pathname === path;
+
+  // Helper to determine where the profile link goes
+  const getProfilePath = () => {
+    return user?.role === 'admin' ? '/admin' : '/profile';
+  };
+
+  return (
+    <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
+      <div className="container nav-content">
+        {/* Logo Section */}
+        <Link to="/" className="logo">
+          <img src={logo} alt="New Balan Medical" className="navbar-logo-img" />
+          <div className="logo-text">
+            <span className="logo-main">NEW BALAN</span>
+            <span className="logo-sub">Medical & Clinic</span>
+          </div>
+        </Link>
+
+        {/* Desktop Navigation Links */}
+        <div className="nav-links desktop-only">
+          {navLinks.map((link) => (
+            <Link
+              key={link.path}
+              to={link.path}
+              className={`nav-link ${isActive(link.path) ? 'active' : ''}`}
+            >
+              {link.name}
+            </Link>
+          ))}
+        </div>
+
+        {/* Desktop Actions (Cart, Login/Profile) */}
+        <div className="nav-actions desktop-only">
+          {isAuthenticated ? (
+            <Link to={getProfilePath()} className="admin-link profile-text-link" title="My Profile">
+              <User size={18} />
+              <span>{user?.role === 'admin' ? 'Admin' : 'Profile'}</span>
+            </Link>
+          ) : (
+            <Link to="/login" className="login-nav-btn">
+              Login
+            </Link>
+          )}
+
+          <Link to="/cart" className="cart-nav-btn" aria-label="Open Cart">
+            <ShoppingCart size={20} />
+            {cart.length > 0 && <span className="cart-badge">{cart.length}</span>}
+          </Link>
+
+          {user?.role !== 'admin' && (
+            <Link to="/pharmacy" className="pharmacy-cta">
+              <ShoppingCart size={20} />
+              <span>Order Medicines</span>
+            </Link>
+          )}
+        </div>
+
+        {/* Mobile Group (Menu, User, Cart) - visible on small screens */}
+        <div className="mobile-actions">
+          {/* Menu Toggle */}
+          <button className="mobile-toggle" onClick={() => setIsOpen(!isOpen)} aria-label="Toggle Menu">
+            {isOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+
+          {/* Login/Profile Button */}
+          {isAuthenticated ? (
+            <Link to={getProfilePath()} className="login-btn mobile" title="My Profile">
+              <User size={20} />
+            </Link>
+          ) : (
+            <Link to="/login" className="login-btn mobile" title="Login">
+              <User size={20} />
+            </Link>
+          )}
+
+          {/* Cart Trigger */}
+          <Link to="/cart" className="cart-nav-btn mobile" aria-label="Open Cart">
+            <ShoppingCart size={22} />
+            {cart.length > 0 && <span className="cart-badge">{cart.length}</span>}
+          </Link>
+        </div>
+      </div>
+
+      {/* Mobile Menu Dropdown */}
+      <div className={`mobile-menu ${isOpen ? 'open' : ''}`}>
+        {navLinks.map((link) => (
+          <Link
+            key={link.path}
+            to={link.path}
+            className={`mobile-link ${isActive(link.path) ? 'active' : ''}`}
+            onClick={() => setIsOpen(false)}
+          >
+            {link.name}
+          </Link>
+        ))}
+
+        <div style={{ borderTop: '1px solid #eee', margin: '1rem 0' }}></div>
+
+        {isAuthenticated ? (
+          <Link to={getProfilePath()} className="mobile-link" onClick={() => setIsOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <User size={20} /> {user?.role === 'admin' ? 'Dashboard' : (user?.name?.split(' ')[0] || 'Profile')}
+          </Link>
+        ) : (
+          <Link to="/login" className="mobile-link" onClick={() => setIsOpen(false)}>
+            Login
+          </Link>
+        )}
+
+        {/* Only show 'Order Medicines' if NOT admin */}
+        {user?.role !== 'admin' && (
+          <Link to="/pharmacy" className="mobile-cta" onClick={() => setIsOpen(false)}>
+            Order Medicines
+          </Link>
+        )}
+      </div>
+    </nav>
+  );
+};
+
+export default Navbar;
