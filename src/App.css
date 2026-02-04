@@ -1,0 +1,24 @@
+/* App specific styles */
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  /* Extra precaution against white side slivers */
+}
+
+main {
+  flex: 1;
+}
+
+.has-marquee-offset {
+  margin-top: 42px;
+  /* Standard marquee height */
+}
+
+@media (max-width: 768px) {
+  .has-marquee-offset {
+    margin-top: 36px;
+    /* Smaller marquee on mobile */
+  }
+}
