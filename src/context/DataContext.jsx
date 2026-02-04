@@ -126,6 +126,9 @@ export const DataProvider = ({ children }) => {
         const newOrder = {
             ...order,
             id: Date.now(),
+            customerId: order.customerId || `CUST-${Date.now()}`,
+            prescriptionId: order.prescriptionId || (order.items?.some(item => item.requiresPrescription) ? `RX-${Date.now()}` : 'N/A'),
+            productIds: order.items?.map(item => item.id).join(', ') || 'N/A',
             status: 'Pending',
             date: new Date().toLocaleDateString(),
             timestamp: Date.now()
@@ -136,7 +139,9 @@ export const DataProvider = ({ children }) => {
 
     const clearNotification = () => setNewOrderNotification(false);
 
-    const updateOrderStatus = (id, status) => setOrders(orders.map(o => o.id === id ? { ...o, status } : o));
+    const updateOrderStatus = (id, status, handledBy = null) => {
+        setOrders(orders.map(o => o.id === id ? { ...o, status, handledBy: handledBy || o.handledBy } : o));
+    };
 
     // Appointment Operations
     const addAppointment = (app) => setAppointments([{ ...app, id: Date.now(), status: 'Pending', date: new Date().toISOString() }, ...appointments]);

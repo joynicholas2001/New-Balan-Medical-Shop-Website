@@ -164,7 +164,7 @@
 
 .footer-bottom {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 2rem 0;
+    padding: 2.5rem 0;
     text-align: center;
     font-size: 0.9rem;
     position: relative;
@@ -185,25 +185,13 @@
     }
 
     .footer-bottom {
-        padding: 2rem 0 3.5rem 0;
-        /* Adjusted padding */
+        padding: 2.5rem 0 4rem 0;
         font-size: 0.85rem;
-        position: relative;
-        z-index: 1;
-        /* Behind bottom nav (which is z-index 1000) */
-        background: var(--gray-900);
-        /* Ensure background color */
-        text-align: left;
-        /* Move text to the left as requested */
-        border-top: none;
-        /* Remove border to avoid white line glitch */
-        overflow: hidden;
-        /* Ensure no overflow causes white slivers */
+        text-align: center;
     }
 
     .footer-bottom p {
-        padding: 0 0.75rem;
-        /* Reduced padding to move text further left */
+        padding: 0 1.5rem;
         line-height: 1.8;
     }
 }

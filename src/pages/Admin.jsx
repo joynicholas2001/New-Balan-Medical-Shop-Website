@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Users, Pill, ShoppingCart, Search, Plus, Trash2, Check, X, Menu, Clock, MapPin, Phone, Pencil, AlertCircle, Eye, CheckCircle, XCircle, LogOut, Bell, Truck, Ticket, UserCheck, Filter } from 'lucide-react';
+import { LayoutDashboard, Users, Pill, ShoppingCart, Search, Plus, Trash2, Check, X, Menu, Clock, MapPin, Phone, Pencil, AlertCircle, Eye, CheckCircle, XCircle, LogOut, Bell, Truck, Ticket, UserCheck, Filter, IndianRupee } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import './Admin.css';
@@ -13,6 +13,14 @@ const Admin = () => {
     const { doctors, deleteDoctor, addDoctor, updateDoctor, products, deleteProduct, addProduct, updateProduct, orders, updateOrderStatus, appointments, addAppointment, updateAppointment, deleteAppointment, updateAppointmentStatus, newOrderNotification, deliverySettings, updateDeliverySettings, coupons, addCoupon, updateCoupon, deleteCoupon, managers, addManager, updateManager, deleteManager, categories, addCategory, deleteCategory } = useData();
     const { logout, user } = useAuth();
     const [searchTerm, setSearchTerm] = useState('');
+
+    // Pagination State
+    const [medicinesPage, setMedicinesPage] = useState(1);
+    const [ordersPage, setOrdersPage] = useState(1);
+    const [appointmentsPage, setAppointmentsPage] = useState(1);
+    const [categoriesPage, setCategoriesPage] = useState(1);
+    const [doctorsPage, setDoctorsPage] = useState(1);
+    const adminItemsPerPage = 10;
 
     // Notification Sound Effect
     useEffect(() => {
@@ -42,6 +50,7 @@ const Admin = () => {
 
     const [doctorForm, setDoctorForm] = useState({ name: '', specialty: '', morning: '10:00 AM - 1:00 PM', evening: '5:00 PM - 9:00 PM', available: true });
     const [productForm, setProductForm] = useState({ name: '', category: categories?.[0] || 'OTC', price: '', image: '', discount: '0', requiresPrescription: false, stock: true });
+    const [orderForm, setOrderForm] = useState({ customerId: '', customerName: '', phone: '', address: '', total: '', paymentMethod: 'cash' });
     const [appointmentForm, setAppointmentForm] = useState({ patientName: '', phone: '', doctorName: '', message: '', status: 'Confirmed' });
     const [slotForm, setSlotForm] = useState({ start: '09:00', end: '11:00', active: true });
     const [couponForm, setCouponForm] = useState({ code: '', discount: 2, isActive: true, expiryDate: '' });
@@ -117,18 +126,52 @@ const Admin = () => {
             requiresPrescription: productForm.category === 'Prescription'
         };
 
-        const mode = modalMode;
-        setShowModal(false);
-
-        if (mode === 'add') {
+        if (modalMode === 'add') {
             addProduct(data);
-            setTimeout(() => showNotify('Medicine added'), 100);
+            showNotify(`${data.name} added! You can add another.`, 'success');
+            // Keep modal open, reset only entry fields but keep category
+            setProductForm({
+                ...productForm,
+                name: '',
+                price: '',
+                image: '',
+                discount: '0'
+            });
         } else {
             updateProduct(editingId, data);
-            setTimeout(() => showNotify('Medicine updated'), 100);
+            showNotify('Medicine updated');
+            setShowModal(false);
+            setEditingId(null);
+            setProductForm({ name: '', category: categories?.[0] || 'OTC', price: '', image: '', discount: '0', requiresPrescription: false, stock: true });
+        }
+    };
+
+    const handleOrderSubmit = (e) => {
+        e.preventDefault();
+        if (!orderForm.customerName || !orderForm.total || !orderForm.phone) {
+            showNotify('Missing fields', 'error');
+            return;
         }
 
-        setProductForm({ name: '', category: categories?.[0] || 'OTC', price: '', image: '', discount: '0', requiresPrescription: false, stock: true });
+        const data = {
+            customerId: orderForm.customerId || `CUST-${Date.now()}`,
+            customerName: orderForm.customerName,
+            phone: orderForm.phone,
+            address: orderForm.address || 'In-Store Pickup',
+            items: [{ name: 'Store Purchase', quantity: 1, price: parseFloat(orderForm.total) }],
+            total: parseFloat(orderForm.total).toFixed(2),
+            discount: '0.00',
+            couponCode: 'N/A',
+            customerEmail: 'walkin@store.com',
+            paymentMethod: orderForm.paymentMethod,
+            paymentId: 'STORE-' + Date.now(),
+            deliverySlot: 'N/A'
+        };
+
+        addOrder(data);
+        showNotify('Order recorded successfully');
+        setShowModal(false);
+        setOrderForm({ customerId: '', customerName: '', phone: '', address: '', total: '', paymentMethod: 'cash' });
     };
 
     const handleAppointmentSubmit = (e) => {
@@ -217,9 +260,9 @@ const Admin = () => {
         e.preventDefault();
         if (!categoryName.trim()) return;
         addCategory(categoryName.trim());
-        showNotify('Category added');
+        showNotify(`Category "${categoryName}" added!`);
         setCategoryName('');
-        setShowModal(false);
+        // Modal stays open for adding more categories
     };
 
     const togglePermission = (perm) => {
@@ -333,7 +376,7 @@ const Admin = () => {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
                             <h3>New Balan</h3>
-                            <p>ADMIN PORTAL</p>
+                            <p>{user?.role === 'manager' ? 'MANAGER DASHBOARD' : 'ADMIN PORTAL'}</p>
                         </div>
                         <button className="mobile-close-btn" style={{ display: 'none' }} onClick={() => setIsMobileSidebarOpen(false)}>
                             <X size={24} />
@@ -386,64 +429,114 @@ const Admin = () => {
                     {activeTab === 'dashboard' && (
                         <div className="dashboard-view animate-slide-up">
                             <div className="stats-grid">
-                                <div className="stat-card">
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                                        <div className="stat-icon blue"><ShoppingCart size={24} /></div>
-                                        <div>
-                                            <h4>Total Orders</h4>
-                                            <p>{orders.length}</p>
+                                {hasPermission('orders') && (
+                                    <div className="stat-card">
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                                            <div className="stat-icon purple" style={{ background: '#f3e8ff', color: '#7c3aed' }}><IndianRupee size={24} /></div>
+                                            <div>
+                                                <h4>Total Revenue</h4>
+                                                <p>₹{orders.filter(o => o.status !== 'Cancelled').reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0).toLocaleString('en-IN')}</p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="stat-card">
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                                        <div className="stat-icon green"><Users size={24} /></div>
-                                        <div>
-                                            <h4>Specialists</h4>
-                                            <p>{doctors.length}</p>
+                                )}
+                                {hasPermission('orders') && (
+                                    <div className="stat-card">
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                                            <div className="stat-icon blue"><ShoppingCart size={24} /></div>
+                                            <div>
+                                                <h4>Total Orders</h4>
+                                                <p>{orders.length}</p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="stat-card">
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                                        <div className="stat-icon orange"><Pill size={24} /></div>
-                                        <div>
-                                            <h4>Inventory</h4>
-                                            <p>{products.length}</p>
+                                )}
+                                {hasPermission('doctors') && (
+                                    <div className="stat-card">
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                                            <div className="stat-icon green"><Users size={24} /></div>
+                                            <div>
+                                                <h4>Specialists</h4>
+                                                <p>{doctors.length}</p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                )}
+                                {hasPermission('medicines') && (
+                                    <div className="stat-card">
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                                            <div className="stat-icon orange"><Pill size={24} /></div>
+                                            <div>
+                                                <h4>Inventory</h4>
+                                                <p>{products.length}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="recent-activity" style={{ marginTop: '3rem' }}>
-                                <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 800 }}><Clock size={20} /> Recent Appointments</h3>
-                                <div className="table-container">
-                                    <div className="table-wrapper">
-                                        <table className="admin-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Patient</th>
-                                                    <th>Doctor</th>
-                                                    <th>Date</th>
-                                                    <th>Status</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {appointments.slice(0, 5).map(app => (
-                                                    <tr key={app.id}>
-                                                        <td data-label="Patient">{app.patientName}</td>
-                                                        <td data-label="Doctor">{app.doctorName}</td>
-                                                        <td data-label="Date">{new Date(app.date).toLocaleDateString()}</td>
-                                                        <td data-label="Status">
-                                                            <span className={`status-tag ${app.status.toLowerCase()}`}>{app.status}</span>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                                {appointments.length === 0 && <tr><td colSpan="4" style={{ textAlign: 'center', padding: '2rem' }}>No recent appointments.</td></tr>}
-                                            </tbody>
-                                        </table>
+                            <div className="dashboard-grid-activity" style={{ marginTop: '3rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem' }}>
+                                {hasPermission('appointments') && (
+                                    <div className="recent-activity">
+                                        <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 800 }}><Clock size={20} /> Recent Appointments</h3>
+                                        <div className="table-container">
+                                            <div className="table-wrapper">
+                                                <table className="admin-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Patient</th>
+                                                            <th>Doctor</th>
+                                                            <th>Status</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {appointments.slice(0, 5).map(app => (
+                                                            <tr key={app.id}>
+                                                                <td data-label="Patient">{app.patientName}</td>
+                                                                <td data-label="Doctor">{app.doctorName}</td>
+                                                                <td data-label="Status">
+                                                                    <span className={`status-tag ${app.status.toLowerCase()}`}>{app.status}</span>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                        {appointments.length === 0 && <tr><td colSpan="3" style={{ textAlign: 'center', padding: '2rem' }}>No recent appointments.</td></tr>}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
+
+                                {hasPermission('orders') && (
+                                    <div className="recent-activity">
+                                        <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 800 }}><ShoppingCart size={20} /> Recent Orders</h3>
+                                        <div className="table-container">
+                                            <div className="table-wrapper">
+                                                <table className="admin-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Customer</th>
+                                                            <th>Total</th>
+                                                            <th>Status</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {orders.slice(0, 5).map(order => (
+                                                            <tr key={order.id}>
+                                                                <td data-label="Customer">{order.customerName}</td>
+                                                                <td data-label="Total">₹{order.total}</td>
+                                                                <td data-label="Status">
+                                                                    <span className={`status-tag ${order.status.toLowerCase()}`}>{order.status}</span>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                        {orders.length === 0 && <tr><td colSpan="3" style={{ textAlign: 'center', padding: '2rem' }}>No recent orders.</td></tr>}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -452,26 +545,51 @@ const Admin = () => {
                     {activeTab === 'doctors' && (
                         <div className="table-container animate-slide-up">
                             <div className="table-actions">
-                                <div className="table-search"><Search size={18} /><input type="text" placeholder="Search doctors..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
+                                <div className="table-search"><Search size={18} /><input type="text" placeholder="Search doctors..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setDoctorsPage(1); }} /></div>
                                 <button className="btn-add" onClick={() => { setModalMode('add'); setDoctorForm({ name: '', specialty: '', morning: '10:00 AM - 1:00 PM', evening: '5:00 PM - 9:00 PM', available: true }); setShowModal(true); }}><Plus size={18} /> Add Doctor</button>
                             </div>
-                            <div className="table-wrapper">
-                                <table className="admin-table">
-                                    <thead><tr><th>Doctor Name</th><th>Specialty</th><th>Morning</th><th>Evening</th><th>Actions</th></tr></thead>
-                                    <tbody>{filteredDoctors.map(doc => (
-                                        <tr key={doc.id}>
-                                            <td data-label="Doctor Name">{doc.name}</td>
-                                            <td data-label="Specialty">{doc.specialty}</td>
-                                            <td data-label="Morning">{doc.morning}</td>
-                                            <td data-label="Evening">{doc.evening}</td>
-                                            <td data-label="Actions" className="actions">
-                                                <button className="action-btn" onClick={() => startEditDoctor(doc)}><Pencil size={16} /></button>
-                                                <button className="action-btn delete" onClick={() => requestDelete('doctor', doc.id, doc.name)}><Trash2 size={16} /></button>
-                                            </td>
-                                        </tr>
-                                    ))}</tbody>
-                                </table>
+                            <div className="scrollable-section-wrapper">
+                                <div className="table-wrapper">
+                                    <table className="admin-table">
+                                        <thead><tr><th>Doctor Name</th><th>Specialty</th><th>Morning</th><th>Evening</th><th>Actions</th></tr></thead>
+                                        <tbody>{filteredDoctors
+                                            .slice((doctorsPage - 1) * adminItemsPerPage, doctorsPage * adminItemsPerPage)
+                                            .map(doc => (
+                                                <tr key={doc.id}>
+                                                    <td data-label="Doctor Name">{doc.name}</td>
+                                                    <td data-label="Specialty">{doc.specialty}</td>
+                                                    <td data-label="Morning">{doc.morning}</td>
+                                                    <td data-label="Evening">{doc.evening}</td>
+                                                    <td data-label="Actions" className="actions">
+                                                        <button className="action-btn" onClick={() => startEditDoctor(doc)}><Pencil size={16} /></button>
+                                                        <button className="action-btn delete" onClick={() => requestDelete('doctor', doc.id, doc.name)}><Trash2 size={16} /></button>
+                                                    </td>
+                                                </tr>
+                                            ))}</tbody>
+                                    </table>
+                                </div>
                             </div>
+                            {Math.ceil(filteredDoctors.length / adminItemsPerPage) > 1 && (
+                                <div className="pagination-bar">
+                                    <button
+                                        onClick={() => setDoctorsPage(p => Math.max(1, p - 1))}
+                                        disabled={doctorsPage === 1}
+                                        className="page-nav-btn"
+                                    >
+                                        <ArrowLeft size={18} /> Prev
+                                    </button>
+                                    <div className="page-numbers">
+                                        Page <span>{doctorsPage}</span> of {Math.ceil(filteredDoctors.length / adminItemsPerPage)}
+                                    </div>
+                                    <button
+                                        onClick={() => setDoctorsPage(p => Math.min(Math.ceil(filteredDoctors.length / adminItemsPerPage), p + 1))}
+                                        disabled={doctorsPage === Math.ceil(filteredDoctors.length / adminItemsPerPage)}
+                                        className="page-nav-btn"
+                                    >
+                                        Next <ChevronRight size={18} />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -479,30 +597,55 @@ const Admin = () => {
                     {activeTab === 'medicines' && (
                         <div className="table-container animate-slide-up">
                             <div className="table-actions">
-                                <div className="table-search"><Search size={18} /><input type="text" placeholder="Search medicines..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
+                                <div className="table-search"><Search size={18} /><input type="text" placeholder="Search medicines..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setMedicinesPage(1); }} /></div>
                                 <button className="btn-add" onClick={() => { setModalMode('add'); setProductForm({ name: '', category: categories?.[0] || 'OTC', price: '', image: '', discount: '0', requiresPrescription: false, stock: true }); setShowModal(true); }}><Plus size={18} /> Add Product</button>
                             </div>
-                            <div className="table-wrapper">
-                                <table className="admin-table">
-                                    <thead><tr><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead>
-                                    <tbody>{filteredProducts.map(prod => (
-                                        <tr key={prod.id}>
-                                            <td data-label="Name">{prod.name}</td>
-                                            <td data-label="Category">{prod.category}</td>
-                                            <td data-label="Price">₹{prod.price}</td>
-                                            <td data-label="Stock">
-                                                <span className={`status-tag ${prod.stock ? 'active' : 'inactive'}`}>
-                                                    {prod.stock ? 'In Stock' : 'Out of Stock'}
-                                                </span>
-                                            </td>
-                                            <td data-label="Actions" className="actions">
-                                                <button className="action-btn" onClick={() => startEditProduct(prod)}><Pencil size={16} /></button>
-                                                <button className="action-btn delete" onClick={() => requestDelete('medicine', prod.id, prod.name)}><Trash2 size={16} /></button>
-                                            </td>
-                                        </tr>
-                                    ))}</tbody>
-                                </table>
+                            <div className="scrollable-section-wrapper">
+                                <div className="table-wrapper">
+                                    <table className="admin-table">
+                                        <thead><tr><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead>
+                                        <tbody>{filteredProducts
+                                            .slice((medicinesPage - 1) * adminItemsPerPage, medicinesPage * adminItemsPerPage)
+                                            .map(prod => (
+                                                <tr key={prod.id}>
+                                                    <td data-label="Name">{prod.name}</td>
+                                                    <td data-label="Category">{prod.category}</td>
+                                                    <td data-label="Price">₹{prod.price}</td>
+                                                    <td data-label="Stock">
+                                                        <span className={`status-tag ${prod.stock ? 'active' : 'inactive'}`}>
+                                                            {prod.stock ? 'In Stock' : 'Out of Stock'}
+                                                        </span>
+                                                    </td>
+                                                    <td data-label="Actions" className="actions">
+                                                        <button className="action-btn" onClick={() => startEditProduct(prod)}><Pencil size={16} /></button>
+                                                        <button className="action-btn delete" onClick={() => requestDelete('medicine', prod.id, prod.name)}><Trash2 size={16} /></button>
+                                                    </td>
+                                                </tr>
+                                            ))}</tbody>
+                                    </table>
+                                </div>
                             </div>
+                            {Math.ceil(filteredProducts.length / adminItemsPerPage) > 1 && (
+                                <div className="pagination-bar">
+                                    <button
+                                        onClick={() => setMedicinesPage(p => Math.max(1, p - 1))}
+                                        disabled={medicinesPage === 1}
+                                        className="page-nav-btn"
+                                    >
+                                        <ArrowLeft size={18} /> Prev
+                                    </button>
+                                    <div className="page-numbers">
+                                        Page <span>{medicinesPage}</span> of {Math.ceil(filteredProducts.length / adminItemsPerPage)}
+                                    </div>
+                                    <button
+                                        onClick={() => setMedicinesPage(p => Math.min(Math.ceil(filteredProducts.length / adminItemsPerPage), p + 1))}
+                                        disabled={medicinesPage === Math.ceil(filteredProducts.length / adminItemsPerPage)}
+                                        className="page-nav-btn"
+                                    >
+                                        Next <ChevronRight size={18} />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -510,40 +653,80 @@ const Admin = () => {
                     {activeTab === 'orders' && (
                         <div className="table-container animate-slide-up">
                             <div className="table-actions">
-                                <div className="table-search"><Search size={18} /><input type="text" placeholder="Search orders..." /></div>
+                                <div className="table-search"><Search size={18} /><input type="text" placeholder="Search orders..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setOrdersPage(1); }} /></div>
+                                <button className="btn-add" onClick={() => { setModalMode('add'); setOrderForm({ customerId: '', customerName: '', phone: '', address: '', total: '', paymentMethod: 'cash' }); setShowModal(true); }}><Plus size={18} /> Add Order</button>
                             </div>
-                            <div className="table-wrapper">
-                                <table className="admin-table">
-                                    <thead><tr><th>Order ID</th><th>Customer</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
-                                    <tbody>{orders.map(order => (
-                                        <tr key={order.id}>
-                                            <td data-label="Order ID">{order.id}</td>
-                                            <td data-label="Customer">{order.customerName}</td>
-                                            <td data-label="Total">₹{order.total}</td>
-                                            <td data-label="Status">
-                                                <select
-                                                    value={order.status}
-                                                    onChange={(e) => {
-                                                        updateOrderStatus(order.id, e.target.value);
-                                                        showNotify(`${e.target.value}`);
-                                                    }}
-                                                    className={`admin-status-select ${order.status.toLowerCase()}`}
-                                                >
-                                                    <option value="Pending">Pending</option>
-                                                    <option value="Processing">Processing</option>
-                                                    <option value="Delivered">Delivered</option>
-                                                    <option value="Cancelled">Cancelled</option>
-                                                </select>
-                                            </td>
-                                            <td data-label="Actions" className="actions">
-                                                <button className="action-btn" onClick={() => setSelectedOrder(order)} title="View Details"><Eye size={16} /></button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                        {orders.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center', padding: '3rem' }}>No orders placed yet.</td></tr>}
-                                    </tbody>
-                                </table>
+                            <div className="scrollable-section-wrapper">
+                                <div className="table-wrapper">
+                                    <table className="admin-table">
+                                        <thead><tr><th>Order ID</th><th>Customer ID</th><th>Customer</th><th>Prescription ID</th><th>Product IDs</th><th>Date</th><th>Total</th><th>Status</th><th>Processed By</th><th>Actions</th></tr></thead>
+                                        <tbody>{orders
+                                            .slice((ordersPage - 1) * adminItemsPerPage, ordersPage * adminItemsPerPage)
+                                            .map(order => (
+                                                <tr key={order.id}>
+                                                    <td data-label="Order ID">{order.id}</td>
+                                                    <td data-label="Customer ID"><code style={{ fontSize: '0.75rem', background: '#f1f5f9', padding: '0.2rem 0.4rem', borderRadius: '4px' }}>{order.customerId || 'N/A'}</code></td>
+                                                    <td data-label="Customer">{order.customerName}</td>
+                                                    <td data-label="Prescription ID"><code style={{ fontSize: '0.75rem', background: order.prescriptionId !== 'N/A' ? '#fef3c7' : '#f1f5f9', padding: '0.2rem 0.4rem', borderRadius: '4px', color: order.prescriptionId !== 'N/A' ? '#92400e' : 'inherit' }}>{order.prescriptionId || 'N/A'}</code></td>
+                                                    <td data-label="Product IDs"><code style={{ fontSize: '0.7rem', background: '#f1f5f9', padding: '0.2rem 0.4rem', borderRadius: '4px', maxWidth: '150px', display: 'inline-block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={order.productIds}>{order.productIds || 'N/A'}</code></td>
+                                                    <td data-label="Date">{order.date || new Date(order.timestamp || Date.now()).toLocaleDateString()}</td>
+                                                    <td data-label="Total">₹{order.total}</td>
+                                                    <td data-label="Status">
+                                                        <select
+                                                            value={order.status}
+                                                            onChange={(e) => {
+                                                                const handlerInfo = `${user?.name || 'User'} (${user?.role === 'admin' ? 'Admin' : 'Manager'})`;
+                                                                updateOrderStatus(order.id, e.target.value, handlerInfo);
+                                                                showNotify(`${e.target.value}`);
+                                                            }}
+                                                            className={`admin-status-select ${order.status.toLowerCase()}`}
+                                                        >
+                                                            <option value="Pending">Pending</option>
+                                                            <option value="Processing">Processing</option>
+                                                            <option value="Delivered">Delivered</option>
+                                                            <option value="Cancelled">Cancelled</option>
+                                                        </select>
+                                                    </td>
+                                                    <td data-label="Processed By">
+                                                        {order.handledBy ? (
+                                                            <span style={{ fontSize: '0.75rem', color: '#475569', background: '#f8fafc', padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #e2e8f0', display: 'inline-block', whiteSpace: 'nowrap' }}>
+                                                                {order.handledBy}
+                                                            </span>
+                                                        ) : (
+                                                            <span style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>—</span>
+                                                        )}
+                                                    </td>
+                                                    <td data-label="Actions" className="actions">
+                                                        <button className="action-btn" onClick={() => setSelectedOrder(order)} title="View Details"><Eye size={16} /></button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {orders.length === 0 && <tr><td colSpan="10" style={{ textAlign: 'center', padding: '3rem' }}>No orders placed yet.</td></tr>}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
+                            {Math.ceil(orders.length / adminItemsPerPage) > 1 && (
+                                <div className="pagination-bar">
+                                    <button
+                                        onClick={() => setOrdersPage(p => Math.max(1, p - 1))}
+                                        disabled={ordersPage === 1}
+                                        className="page-nav-btn"
+                                    >
+                                        <ArrowLeft size={18} /> Prev
+                                    </button>
+                                    <div className="page-numbers">
+                                        Page <span>{ordersPage}</span> of {Math.ceil(orders.length / adminItemsPerPage)}
+                                    </div>
+                                    <button
+                                        onClick={() => setOrdersPage(p => Math.min(Math.ceil(orders.length / adminItemsPerPage), p + 1))}
+                                        disabled={ordersPage === Math.ceil(orders.length / adminItemsPerPage)}
+                                        className="page-nav-btn"
+                                    >
+                                        Next <ChevronRight size={18} />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -551,47 +734,73 @@ const Admin = () => {
                     {activeTab === 'appointments' && (
                         <div className="table-container animate-slide-up">
                             <div className="table-actions">
-                                <div className="table-search"><Search size={18} /><input type="text" placeholder="Search appointments..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
+                                <div className="table-search"><Search size={18} /><input type="text" placeholder="Search appointments..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setAppointmentsPage(1); }} /></div>
                                 <button className="btn-add" onClick={() => { setModalMode('add'); setAppointmentForm({ patientName: '', phone: '', doctorName: '', message: '', status: 'Confirmed' }); setShowModal(true); }}><Plus size={18} /> Add Appointment</button>
                             </div>
-                            <div className="table-wrapper">
-                                <table className="admin-table">
-                                    <thead><tr><th>Patient</th><th>Phone</th><th>Doctor</th><th>Status</th><th>Actions</th></tr></thead>
-                                    <tbody>{appointments.map(app => (
-                                        <tr key={app.id}>
-                                            <td data-label="Patient">{app.patientName}</td>
-                                            <td data-label="Phone">{app.phone}</td>
-                                            <td data-label="Doctor">{app.doctorName}</td>
-                                            <td data-label="Status">
-                                                <span className={`status-tag ${app.status.toLowerCase()}`}>
-                                                    {app.status}
-                                                </span>
-                                            </td>
-                                            <td data-label="Actions" className="actions">
-                                                <button className="action-btn" onClick={() => {
-                                                    setModalMode('edit');
-                                                    setEditingId(app.id);
-                                                    setAppointmentForm({
-                                                        patientName: app.patientName,
-                                                        phone: app.phone,
-                                                        doctorName: app.doctorName,
-                                                        message: app.message || '',
-                                                        status: app.status
-                                                    });
-                                                    setShowModal(true);
-                                                }} title="Edit"><Pencil size={16} /></button>
-                                                <button className="action-btn delete" onClick={() => requestDelete('appointment', app.id, app.patientName)} title="Delete"><Trash2 size={16} /></button>
-                                                {app.status === 'Pending' && (
-                                                    <>
-                                                        <button className="action-btn" onClick={() => { updateAppointmentStatus(app.id, 'Confirmed'); showNotify('Confirmed'); }} title="Confirm"><CheckCircle size={16} /></button>
-                                                        <button className="action-btn delete" onClick={() => { updateAppointmentStatus(app.id, 'Cancelled'); showNotify('Cancelled', 'error'); }} title="Cancel"><XCircle size={16} /></button>
-                                                    </>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}</tbody>
-                                </table>
+                            <div className="scrollable-section-wrapper">
+                                <div className="table-wrapper">
+                                    <table className="admin-table">
+                                        <thead><tr><th>Patient</th><th>Phone</th><th>Doctor</th><th>Status</th><th>Actions</th></tr></thead>
+                                        <tbody>{appointments
+                                            .filter(app => app.patientName.toLowerCase().includes(searchTerm.toLowerCase()))
+                                            .slice((appointmentsPage - 1) * adminItemsPerPage, appointmentsPage * adminItemsPerPage)
+                                            .map(app => (
+                                                <tr key={app.id}>
+                                                    <td data-label="Patient">{app.patientName}</td>
+                                                    <td data-label="Phone">{app.phone}</td>
+                                                    <td data-label="Doctor">{app.doctorName}</td>
+                                                    <td data-label="Status">
+                                                        <span className={`status-tag ${app.status.toLowerCase()}`}>
+                                                            {app.status}
+                                                        </span>
+                                                    </td>
+                                                    <td data-label="Actions" className="actions">
+                                                        <button className="action-btn" onClick={() => {
+                                                            setModalMode('edit');
+                                                            setEditingId(app.id);
+                                                            setAppointmentForm({
+                                                                patientName: app.patientName,
+                                                                phone: app.phone,
+                                                                doctorName: app.doctorName,
+                                                                message: app.message || '',
+                                                                status: app.status
+                                                            });
+                                                            setShowModal(true);
+                                                        }} title="Edit"><Pencil size={16} /></button>
+                                                        <button className="action-btn delete" onClick={() => requestDelete('appointment', app.id, app.patientName)} title="Delete"><Trash2 size={16} /></button>
+                                                        {app.status === 'Pending' && (
+                                                            <>
+                                                                <button className="action-btn" onClick={() => { updateAppointmentStatus(app.id, 'Confirmed'); showNotify('Confirmed'); }} title="Confirm"><CheckCircle size={16} /></button>
+                                                                <button className="action-btn delete" onClick={() => { updateAppointmentStatus(app.id, 'Cancelled'); showNotify('Cancelled', 'error'); }} title="Cancel"><XCircle size={16} /></button>
+                                                            </>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}</tbody>
+                                    </table>
+                                </div>
                             </div>
+                            {Math.ceil(appointments.filter(app => app.patientName.toLowerCase().includes(searchTerm.toLowerCase())).length / adminItemsPerPage) > 1 && (
+                                <div className="pagination-bar">
+                                    <button
+                                        onClick={() => setAppointmentsPage(p => Math.max(1, p - 1))}
+                                        disabled={appointmentsPage === 1}
+                                        className="page-nav-btn"
+                                    >
+                                        <ArrowLeft size={18} /> Prev
+                                    </button>
+                                    <div className="page-numbers">
+                                        Page <span>{appointmentsPage}</span> of {Math.ceil(appointments.filter(app => app.patientName.toLowerCase().includes(searchTerm.toLowerCase())).length / adminItemsPerPage)}
+                                    </div>
+                                    <button
+                                        onClick={() => setAppointmentsPage(p => Math.min(Math.ceil(appointments.filter(app => app.patientName.toLowerCase().includes(searchTerm.toLowerCase())).length / adminItemsPerPage), p + 1))}
+                                        disabled={appointmentsPage === Math.ceil(appointments.filter(app => app.patientName.toLowerCase().includes(searchTerm.toLowerCase())).length / adminItemsPerPage)}
+                                        className="page-nav-btn"
+                                    >
+                                        Next <ChevronRight size={18} />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -795,7 +1004,7 @@ const Admin = () => {
                                             type="text"
                                             placeholder="Search categories..."
                                             value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            onChange={(e) => { setSearchTerm(e.target.value); setCategoriesPage(1); }}
                                         />
                                     </div>
                                     <button
@@ -811,38 +1020,64 @@ const Admin = () => {
                                 </div>
 
                                 <div className="table-container" style={{ border: 'none', boxShadow: 'none' }}>
-                                    <div className="table-wrapper">
-                                        <table className="admin-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Category Name</th>
-                                                    <th style={{ textAlign: 'right' }}>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {categories.filter(cat => cat.toLowerCase().includes(searchTerm.toLowerCase())).map(cat => (
-                                                    <tr key={cat}>
-                                                        <td data-label="Category Name"><strong>{cat}</strong></td>
-                                                        <td data-label="Actions" className="actions" style={{ justifyContent: 'flex-end' }}>
-                                                            <button
-                                                                className="action-btn delete"
-                                                                onClick={() => {
-                                                                    if (confirm(`Are you sure you want to delete "${cat}" category?`)) {
-                                                                        deleteCategory(cat);
-                                                                        showNotify('Category removed', 'error');
-                                                                    }
-                                                                }}
-                                                                title="Delete Category"
-                                                            >
-                                                                <Trash2 size={16} />
-                                                            </button>
-                                                        </td>
+                                    <div className="scrollable-section-wrapper">
+                                        <div className="table-wrapper">
+                                            <table className="admin-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Category Name</th>
+                                                        <th style={{ textAlign: 'right' }}>Actions</th>
                                                     </tr>
-                                                ))}
-                                                {categories.length === 0 && <tr><td colSpan="2" style={{ textAlign: 'center', padding: '2rem' }}>No categories found.</td></tr>}
-                                            </tbody>
-                                        </table>
+                                                </thead>
+                                                <tbody>
+                                                    {categories
+                                                        .filter(cat => cat.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                        .slice((categoriesPage - 1) * adminItemsPerPage, categoriesPage * adminItemsPerPage)
+                                                        .map(cat => (
+                                                            <tr key={cat}>
+                                                                <td data-label="Category Name"><strong>{cat}</strong></td>
+                                                                <td data-label="Actions" className="actions" style={{ justifyContent: 'flex-end' }}>
+                                                                    <button
+                                                                        className="action-btn delete"
+                                                                        onClick={() => {
+                                                                            if (confirm(`Are you sure you want to delete "${cat}" category?`)) {
+                                                                                deleteCategory(cat);
+                                                                                showNotify('Category removed', 'error');
+                                                                            }
+                                                                        }}
+                                                                        title="Delete Category"
+                                                                    >
+                                                                        <Trash2 size={16} />
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    {categories.length === 0 && <tr><td colSpan="2" style={{ textAlign: 'center', padding: '2rem' }}>No categories found.</td></tr>}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
+                                    {Math.ceil(categories.filter(cat => cat.toLowerCase().includes(searchTerm.toLowerCase())).length / adminItemsPerPage) > 1 && (
+                                        <div className="pagination-bar" style={{ borderRadius: '24px', border: '1px solid var(--admin-border)', marginTop: '1rem' }}>
+                                            <button
+                                                onClick={() => setCategoriesPage(p => Math.max(1, p - 1))}
+                                                disabled={categoriesPage === 1}
+                                                className="page-nav-btn"
+                                            >
+                                                <ArrowLeft size={18} /> Prev
+                                            </button>
+                                            <div className="page-numbers">
+                                                Page <span>{categoriesPage}</span> of {Math.ceil(categories.filter(cat => cat.toLowerCase().includes(searchTerm.toLowerCase())).length / adminItemsPerPage)}
+                                            </div>
+                                            <button
+                                                onClick={() => setCategoriesPage(p => Math.min(Math.ceil(categories.filter(cat => cat.toLowerCase().includes(searchTerm.toLowerCase())).length / adminItemsPerPage), p + 1))}
+                                                disabled={categoriesPage === Math.ceil(categories.filter(cat => cat.toLowerCase().includes(searchTerm.toLowerCase())).length / adminItemsPerPage)}
+                                                className="page-nav-btn"
+                                            >
+                                                Next <ChevronRight size={18} />
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -861,11 +1096,12 @@ const Admin = () => {
                         <form onSubmit={
                             activeTab === 'doctors' ? handleDoctorSubmit :
                                 activeTab === 'medicines' ? handleProductSubmit :
-                                    activeTab === 'appointments' ? handleAppointmentSubmit :
-                                        activeTab === 'coupons' ? handleCouponSubmit :
-                                            activeTab === 'staff' ? handleManagerSubmit :
-                                                activeTab === 'categories' ? handleCategorySubmit :
-                                                    handleSlotSubmit
+                                    activeTab === 'orders' ? handleOrderSubmit :
+                                        activeTab === 'appointments' ? handleAppointmentSubmit :
+                                            activeTab === 'coupons' ? handleCouponSubmit :
+                                                activeTab === 'staff' ? handleManagerSubmit :
+                                                    activeTab === 'categories' ? handleCategorySubmit :
+                                                        handleSlotSubmit
                         } className="modal-form">
                             {activeTab === 'doctors' && (
                                 <>
@@ -877,7 +1113,12 @@ const Admin = () => {
                             )}
                             {activeTab === 'medicines' && (
                                 <>
-                                    <div className="form-group"><label>Name*</label><input type="text" required value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} /></div>
+                                    {modalMode === 'add' && (
+                                        <div style={{ backgroundColor: '#eff6ff', padding: '0.75rem', borderRadius: '12px', marginBottom: '1.5rem', fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600, border: '1px solid #dbeafe' }}>
+                                            💡 You can keep adding medicines. Close the modal when done.
+                                        </div>
+                                    )}
+                                    <div className="form-group"><label>Name*</label><input type="text" required value={productForm.name} placeholder="e.g. Paracetamol" onChange={e => setProductForm({ ...productForm, name: e.target.value })} /></div>
                                     <div className="form-group">
                                         <label>Category*</label>
                                         <select
@@ -885,7 +1126,6 @@ const Admin = () => {
                                             onChange={e => {
                                                 const newCat = e.target.value;
                                                 setProductForm({ ...productForm, category: newCat });
-                                                showNotify(`${newCat}`);
                                             }}
                                         >
                                             {categories.map(cat => (
@@ -893,19 +1133,38 @@ const Admin = () => {
                                             ))}
                                         </select>
                                     </div>
-                                    <div className="form-group"><label>Price (₹)*</label><input type="number" required value={productForm.price} onChange={e => setProductForm({ ...productForm, price: e.target.value })} /></div>
-                                    <div className="form-group"><label>Discount (%)</label><input type="number" value={productForm.discount} onChange={e => setProductForm({ ...productForm, discount: e.target.value })} /></div>
+                                    <div className="form-group"><label>Price (₹)*</label><input type="number" required value={productForm.price} placeholder="0.00" onChange={e => setProductForm({ ...productForm, price: e.target.value })} /></div>
+                                    <div className="form-group"><label>Discount (%)</label><input type="number" value={productForm.discount} placeholder="0" onChange={e => setProductForm({ ...productForm, discount: e.target.value })} /></div>
                                     <div className="form-group"><label>Image URL*</label><input type="text" required value={productForm.image} placeholder="https://example.com/image.jpg" onChange={e => setProductForm({ ...productForm, image: e.target.value })} /></div>
                                     <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '1rem' }}>
                                         <label style={{ marginBottom: 0 }}>Stock Status:</label>
                                         <button
                                             type="button"
                                             className={`status-tag ${productForm.stock ? 'active' : 'inactive'}`}
-                                            style={{ cursor: 'pointer', border: '1px solid currentColor' }}
+                                            style={{ cursor: 'pointer', border: '1px solid currentColor', fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
                                             onClick={() => setProductForm({ ...productForm, stock: !productForm.stock })}
                                         >
                                             {productForm.stock ? 'In Stock' : 'Out of Stock'}
                                         </button>
+                                    </div>
+                                </>
+                            )}
+                            {activeTab === 'orders' && (
+                                <>
+                                    <div style={{ backgroundColor: '#fdf2f8', padding: '0.75rem', borderRadius: '12px', marginBottom: '1.5rem', fontSize: '0.85rem', color: '#db2777', fontWeight: 600, border: '1px solid #fce7f3' }}>
+                                        🛍️ Record a store/offline order for walk-in customers.
+                                    </div>
+                                    <div className="form-group"><label>Customer ID (Optional)</label><input type="text" value={orderForm.customerId} placeholder="Auto-generated if empty" onChange={e => setOrderForm({ ...orderForm, customerId: e.target.value })} /></div>
+                                    <div className="form-group"><label>Customer Name*</label><input type="text" required value={orderForm.customerName} placeholder="Full Name" onChange={e => setOrderForm({ ...orderForm, customerName: e.target.value })} /></div>
+                                    <div className="form-group"><label>Phone Number*</label><input type="tel" required value={orderForm.phone} placeholder="+91..." onChange={e => setOrderForm({ ...orderForm, phone: e.target.value })} /></div>
+                                    <div className="form-group"><label>Full Address (Optional)</label><textarea value={orderForm.address} placeholder="Shipping or contact address" onChange={e => setOrderForm({ ...orderForm, address: e.target.value })}></textarea></div>
+                                    <div className="form-group"><label>Total Bill Amount (₹)*</label><input type="number" required value={orderForm.total} placeholder="0.00" onChange={e => setOrderForm({ ...orderForm, total: e.target.value })} /></div>
+                                    <div className="form-group">
+                                        <label>Payment Method</label>
+                                        <select value={orderForm.paymentMethod} onChange={e => setOrderForm({ ...orderForm, paymentMethod: e.target.value })}>
+                                            <option value="cash">Cash on Delivery / In-Store</option>
+                                            <option value="online">Online Payment</option>
+                                        </select>
                                     </div>
                                 </>
                             )}
@@ -965,6 +1224,9 @@ const Admin = () => {
                             )}
                             {activeTab === 'categories' && (
                                 <>
+                                    <div style={{ backgroundColor: '#eff6ff', padding: '0.75rem', borderRadius: '12px', marginBottom: '1.5rem', fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600, border: '1px solid #dbeafe' }}>
+                                        💡 Add multiple categories. Close the modal when done.
+                                    </div>
                                     <div className="form-group">
                                         <label>Category Name*</label>
                                         <input

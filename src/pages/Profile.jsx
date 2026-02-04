@@ -6,7 +6,8 @@ import {
     User, MapPin, Phone, Mail, Calendar, Clock,
     LayoutDashboard, ShoppingBag, Users, Pill,
     Truck, LogOut, Menu, X, ChevronRight,
-    Search, Bell, Edit, CheckCircle, Package, ArrowLeft
+    Search, Bell, Edit, CheckCircle, Package, ArrowLeft,
+    HeartPulse, Plus, Home as HomeIcon, ShoppingCart
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Footer from '../components/layout/Footer';
@@ -28,6 +29,11 @@ const Profile = () => {
         city: user?.city || ''
     });
     const [isSaving, setIsSaving] = useState(false);
+
+    // Pagination State
+    const [medicinesPage, setMedicinesPage] = useState(1);
+    const [ordersPage, setOrdersPage] = useState(1);
+    const itemsPerPage = 6;
 
     const [showRecentOrders, setShowRecentOrders] = useState(true);
 
@@ -57,6 +63,7 @@ const Profile = () => {
         { id: 'medicines', label: 'Medicines', icon: <Pill size={20} /> },
         { id: 'orders', label: 'My Orders', icon: <ShoppingBag size={20} /> },
     ];
+
 
     const handleProfileUpdate = async (e) => {
         e.preventDefault();
@@ -153,54 +160,82 @@ const Profile = () => {
                     </div>
                 );
 
-
-
             case 'medicines':
+                const medicineCount = products.length;
+                const medicineTotalPages = Math.ceil(medicineCount / itemsPerPage);
+                const currentMedicines = products.slice(
+                    (medicinesPage - 1) * itemsPerPage,
+                    medicinesPage * itemsPerPage
+                );
+
                 return (
                     <div className="animate-fade">
                         <h2 className="section-title"><Pill size={24} /> Pharmacy Inventory</h2>
-                        <div className="table-container">
-                            <div className="table-wrapper">
-                                <table className="admin-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Name</th>
-                                            <th>Category</th>
-                                            <th>Price</th>
-                                            <th>Stock</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {products.map(prod => (
-                                            <tr key={prod.id}>
-                                                <td data-label="Name">{prod.name}</td>
-                                                <td data-label="Category">{prod.category}</td>
-                                                <td data-label="Price">₹{prod.price}</td>
-                                                <td data-label="Stock">
-                                                    <span className={`status-tag ${prod.stock ? 'completed' : 'cancelled'}`}>
-                                                        {prod.stock ? 'In Stock' : 'Out of Stock'}
-                                                    </span>
-                                                </td>
-                                                <td data-label="Actions" className="actions">
-                                                    <button
-                                                        className="buy-btn"
-                                                        disabled={!prod.stock}
-                                                        onClick={() => {
-                                                            addToCart(prod);
-                                                            alert(`${prod.name} added to cart!`);
-                                                        }}
-                                                        style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
-                                                    >
-                                                        Order Now
-                                                    </button>
-                                                </td>
+                        <div className="scrollable-section-wrapper">
+                            <div className="table-container">
+                                <div className="table-wrapper">
+                                    <table className="admin-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Category</th>
+                                                <th>Price</th>
+                                                <th>Stock</th>
+                                                <th>Actions</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            {currentMedicines.map(prod => (
+                                                <tr key={prod.id}>
+                                                    <td data-label="Name">{prod.name}</td>
+                                                    <td data-label="Category">{prod.category}</td>
+                                                    <td data-label="Price">₹{prod.price}</td>
+                                                    <td data-label="Stock">
+                                                        <span className={`status-tag ${prod.stock ? 'completed' : 'cancelled'}`}>
+                                                            {prod.stock ? 'In Stock' : 'Out of Stock'}
+                                                        </span>
+                                                    </td>
+                                                    <td data-label="Actions" className="actions">
+                                                        <button
+                                                            className="buy-btn"
+                                                            disabled={!prod.stock}
+                                                            onClick={() => {
+                                                                addToCart(prod);
+                                                                alert(`${prod.name} added to cart!`);
+                                                            }}
+                                                            style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
+                                                        >
+                                                            Order Now
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
+                        {medicineTotalPages > 1 && (
+                            <div className="pagination-bar">
+                                <button
+                                    onClick={() => setMedicinesPage(p => Math.max(1, p - 1))}
+                                    disabled={medicinesPage === 1}
+                                    className="page-nav-btn"
+                                >
+                                    <ArrowLeft size={18} /> Prev
+                                </button>
+                                <div className="page-numbers">
+                                    Page <span>{medicinesPage}</span> of {medicineTotalPages}
+                                </div>
+                                <button
+                                    onClick={() => setMedicinesPage(p => Math.min(medicineTotalPages, p + 1))}
+                                    disabled={medicinesPage === medicineTotalPages}
+                                    className="page-nav-btn"
+                                >
+                                    Next <ChevronRight size={18} />
+                                </button>
+                            </div>
+                        )}
                     </div>
                 );
 
@@ -228,63 +263,85 @@ const Profile = () => {
                                 <p>No orders placed yet.</p>
                             </div>
                         ) : (
-                            Object.entries(groupedOrders)
-                                .sort((a, b) => new Date(b[0]) - new Date(a[0]))
-                                .map(([date, dateOrders]) => {
-                                    // Format Date to DD/MM/YYYY
-                                    const dateObj = new Date(date);
-                                    const formattedDate = `${dateObj.getDate().toString().padStart(2, '0')}/${(dateObj.getMonth() + 1).toString().padStart(2, '0')}/${dateObj.getFullYear()}`;
+                            <div className="scrollable-section-wrapper">
+                                {Object.entries(groupedOrders)
+                                    .sort((a, b) => new Date(b[0]) - new Date(a[0]))
+                                    .slice((ordersPage - 1) * 3, ordersPage * 3) // Paginate by date groups (3 groups per page)
+                                    .map(([date, dateOrders]) => {
+                                        const dateObj = new Date(date);
+                                        const formattedDate = `${dateObj.getDate().toString().padStart(2, '0')}/${(dateObj.getMonth() + 1).toString().padStart(2, '0')}/${dateObj.getFullYear()}`;
+                                        const sortedDateOrders = [...dateOrders].sort((a, b) => a.id - b.id);
 
-                                    // Sort orders by ID (ascending) to sequence them 1, 2, 3...
-                                    const sortedDateOrders = [...dateOrders].sort((a, b) => a.id - b.id);
-
-                                    return (
-                                        <div key={date} className="section-card" style={{ marginBottom: '2rem' }}>
-                                            <h3 style={{
-                                                padding: '0 0 1rem 0',
-                                                borderBottom: '1px solid #e2e8f0',
-                                                marginBottom: '1rem',
-                                                color: 'var(--primary)',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem'
-                                            }}>
-                                                <Calendar size={20} />
-                                                {formattedDate}
-                                            </h3>
-                                            <div className="dashboard-table-container" style={{ boxShadow: 'none', border: 'none' }}>
-                                                <table className="dashboard-table">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Order No</th>
-                                                            <th>Order ID (PK)</th>
-                                                            <th>Customer ID (FK)</th>
-                                                            <th>Prescription ID (FK)</th>
-                                                            <th>Address ID (FK)</th>
-                                                            <th>Total</th>
-                                                            <th>Status</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {sortedDateOrders.map((order, index) => (
-                                                            <tr key={order.id}>
-                                                                <td data-label="Order No" style={{ fontWeight: 'bold' }}>Order {index + 1}</td>
-                                                                <td data-label="Order ID">#{order.id.toString().slice(-6)}</td>
-                                                                <td data-label="Customer ID">{user.id || 'CUST-001'}</td>
-                                                                <td data-label="Prescription ID">PRE-{order.id.toString().slice(-4)}</td>
-                                                                <td data-label="Address ID">ADDR-{order.id.toString().slice(-4)}</td>
-                                                                <td data-label="Total">₹{order.total}</td>
-                                                                <td data-label="Status">
-                                                                    <span className={`status-tag ${order.status.toLowerCase()}`}>{order.status}</span>
-                                                                </td>
+                                        return (
+                                            <div key={date} className="section-card" style={{ marginBottom: '2rem' }}>
+                                                <h3 style={{
+                                                    padding: '0 0 1rem 0',
+                                                    borderBottom: '1px solid #e2e8f0',
+                                                    marginBottom: '1rem',
+                                                    color: 'var(--primary)',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.5rem'
+                                                }}>
+                                                    <Calendar size={20} />
+                                                    {formattedDate}
+                                                </h3>
+                                                <div className="dashboard-table-container" style={{ boxShadow: 'none', border: 'none' }}>
+                                                    <table className="dashboard-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Order No</th>
+                                                                <th>Order ID (PK)</th>
+                                                                <th>Customer ID (FK)</th>
+                                                                <th>Prescription ID (FK)</th>
+                                                                <th>Address ID (FK)</th>
+                                                                <th>Total</th>
+                                                                <th>Status</th>
                                                             </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
+                                                        </thead>
+                                                        <tbody>
+                                                            {sortedDateOrders.map((order, index) => (
+                                                                <tr key={order.id}>
+                                                                    <td data-label="Order No" style={{ fontWeight: 'bold' }}>Order {index + 1}</td>
+                                                                    <td data-label="Order ID">#{order.id.toString().slice(-6)}</td>
+                                                                    <td data-label="Customer ID">{user.id || 'CUST-001'}</td>
+                                                                    <td data-label="Prescription ID">PRE-{order.id.toString().slice(-4)}</td>
+                                                                    <td data-label="Address ID">ADDR-{order.id.toString().slice(-4)}</td>
+                                                                    <td data-label="Total">₹{order.total}</td>
+                                                                    <td data-label="Status">
+                                                                        <span className={`status-tag ${order.status.toLowerCase()}`}>{order.status}</span>
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
                                             </div>
-                                        </div>
-                                    );
-                                })
+                                        );
+                                    })}
+                            </div>
+                        )}
+
+                        {Math.ceil(Object.keys(groupedOrders).length / 3) > 1 && (
+                            <div className="pagination-bar" style={{ marginTop: '1.5rem' }}>
+                                <button
+                                    onClick={() => setOrdersPage(p => Math.max(1, p - 1))}
+                                    disabled={ordersPage === 1}
+                                    className="page-nav-btn"
+                                >
+                                    <ArrowLeft size={18} /> Prev
+                                </button>
+                                <div className="page-numbers">
+                                    Page <span>{ordersPage}</span> of {Math.ceil(Object.keys(groupedOrders).length / 3)}
+                                </div>
+                                <button
+                                    onClick={() => setOrdersPage(p => Math.min(Math.ceil(Object.keys(groupedOrders).length / 3), p + 1))}
+                                    disabled={ordersPage === Math.ceil(Object.keys(groupedOrders).length / 3)}
+                                    className="page-nav-btn"
+                                >
+                                    Next <ChevronRight size={18} />
+                                </button>
+                            </div>
                         )}
                     </div>
                 );
@@ -298,96 +355,88 @@ const Profile = () => {
     }
 
     return (
-        <div className="dashboard-layout animate-fade">
-            {/* Sidebar */}
-            <aside className={`dashboard-sidebar ${isSidebarCollapsed ? 'collapsed' : ''} ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-                <div className="sidebar-brand">
-                    <div className="brand-icon"><Pill size={24} /></div>
-                    <div className="brand-name">New Balan<br /><small>Medical & Clinic</small></div>
-                    <button className="mobile-close" onClick={() => setIsMobileMenuOpen(false)}><X size={24} /></button>
-                </div>
-
-                <nav className="sidebar-menu">
-                    {menuItems.map(item => (
-                        <button
-                            key={item.id}
-                            className={`menu-item ${activeTab === item.id ? 'active' : ''}`}
-                            onClick={() => {
-                                setActiveTab(item.id);
-                                setIsMobileMenuOpen(false);
-                            }}
-                        >
-                            {item.icon}
-                            <span>{item.label}</span>
-                        </button>
-                    ))}
-                </nav>
-
-                <div className="sidebar-footer">
-                    <button className="menu-item logout-btn" onClick={() => { logout(); navigate('/login'); }}>
-                        <LogOut size={20} />
-                        <span>Logout</span>
-                    </button>
-                </div>
-            </aside>
-
-            {/* Main Content */}
-            <main className="customer-main">
-                <header className="customer-header">
-                    <div className="header-left">
-                        <button className="mobile-toggle" onClick={() => setIsMobileMenuOpen(true)}>
-                            <Menu size={24} />
-                        </button>
-                        <div className="header-search">
-                            <Search size={18} />
-                            <input type="text" placeholder="Search for medicines, doctors..." />
+        <div className="dashboard-page-wrapper">
+            <div className="dashboard-layout animate-fade">
+                {/* Sidebar */}
+                <aside className={`dashboard-sidebar ${isSidebarCollapsed ? 'collapsed' : ''} ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+                    <div className="sidebar-brand">
+                        <div className="brand-icon"><Pill size={24} /></div>
+                        <div className="brand-name">
+                            <span className="logo-main">NEW BALAN</span>
+                            <span className="logo-sub">Medical & Clinic</span>
                         </div>
+                        <button className="mobile-close" onClick={() => setIsMobileMenuOpen(false)}><X size={24} /></button>
                     </div>
 
-                    <div className="header-actions">
-                        <button className="icon-btn"><Bell size={20} /></button>
-                        <div className="user-profile" onClick={() => setActiveTab('profile')}>
-                            <div className="user-info">
-                                <span className="user-name">{user.name}</span>
-                                <span className="user-role">{user.membership || 'Premium Member'}</span>
+                    <nav className="sidebar-menu">
+                        {menuItems.map(item => (
+                            <button
+                                key={item.id}
+                                className={`menu-item ${activeTab === item.id ? 'active' : ''}`}
+                                onClick={() => {
+                                    setActiveTab(item.id);
+                                    setIsMobileMenuOpen(false);
+                                }}
+                            >
+                                {item.icon}
+                                <span>{item.label}</span>
+                            </button>
+                        ))}
+                    </nav>
+
+                    <div className="sidebar-footer">
+                        <button className="menu-item logout-btn" onClick={() => { logout(); navigate('/login'); }}>
+                            <LogOut size={20} />
+                            <span>Logout</span>
+                        </button>
+                    </div>
+                </aside>
+
+                {/* Main Content */}
+                <main className="customer-main">
+                    <header className="customer-header">
+                        <div className="header-left">
+                            <button className="mobile-toggle" onClick={() => setIsMobileMenuOpen(true)}>
+                                <Menu size={24} />
+                            </button>
+                            <div className="header-search">
+                                <Search size={18} />
+                                <input type="text" placeholder="Search for medicines, doctors..." />
                             </div>
-                            <div className="avatar">{user.name.charAt(0)}</div>
                         </div>
+
+                        <div className="header-actions">
+                            <button className="icon-btn"><Bell size={20} /></button>
+                            <div className="user-profile" onClick={() => setActiveTab('profile')}>
+                                <div className="user-info">
+                                    <span className="user-name">{user?.name || 'User'}</span>
+                                    <span className="user-role">{user?.membership || 'Premium Member'}</span>
+                                </div>
+                                <div className="avatar">{(user?.name || 'User').charAt(0)}</div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <div className="customer-content">
+                        {renderSection()}
                     </div>
-                </header>
 
-                <div className="customer-content">
-                    {renderSection()}
-                </div>
+                    <div className="mobile-logout-container">
+                        <button className="mobile-action-logout" onClick={() => { logout(); navigate('/login'); }}>
+                            <LogOut size={20} />
+                            <span>Logout of Account</span>
+                        </button>
+                    </div>
+                </main>
 
-                <Footer />
-            </main>
-
-            {/* Mobile Sidebar Overlay */}
-            {isMobileMenuOpen && (
-                <div className="sidebar-overlay" onClick={() => setIsMobileMenuOpen(false)}></div>
-            )}
-
-            {/* Mobile Bottom Nav (Optional Enhancement - kept for quick access) */}
-            <div className="mobile-bottom-bar">
-                {menuItems.map(item => (
-                    <button
-                        key={item.id}
-                        className={`bottom-nav-item ${activeTab === item.id ? 'active' : ''}`}
-                        onClick={() => setActiveTab(item.id)}
-                    >
-                        {item.icon}
-                        <span className="nav-label">{item.label}</span>
-                    </button>
-                ))}
-                <button
-                    className="bottom-nav-item logout-mobile"
-                    onClick={() => { logout(); navigate('/login'); }}
-                >
-                    <LogOut size={20} />
-                    <span className="nav-label">Logout</span>
-                </button>
+                {/* Mobile Sidebar Overlay */}
+                {isMobileMenuOpen && (
+                    <div className="sidebar-overlay" onClick={() => setIsMobileMenuOpen(false)}></div>
+                )}
             </div>
+
+            <Footer />
+
         </div>
     );
 };

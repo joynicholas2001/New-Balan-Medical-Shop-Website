@@ -35,7 +35,7 @@ const Navbar = () => {
 
   // Helper to determine where the profile link goes
   const getProfilePath = () => {
-    return user?.role === 'admin' ? '/admin' : '/profile';
+    return (user?.role === 'admin' || user?.role === 'manager') ? '/admin' : '/profile';
   };
 
   return (
@@ -68,7 +68,7 @@ const Navbar = () => {
           {isAuthenticated ? (
             <Link to={getProfilePath()} className="admin-link profile-text-link" title="My Profile">
               <User size={18} />
-              <span>{user?.role === 'admin' ? 'Admin' : 'Profile'}</span>
+              <span>{(user?.role === 'admin' || user?.role === 'manager') ? 'Dashboard' : 'Profile'}</span>
             </Link>
           ) : (
             <Link to="/login" className="login-nav-btn">
@@ -132,7 +132,7 @@ const Navbar = () => {
 
         {isAuthenticated ? (
           <Link to={getProfilePath()} className="mobile-link" onClick={() => setIsOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <User size={20} /> {user?.role === 'admin' ? 'Dashboard' : (user?.name?.split(' ')[0] || 'Profile')}
+            <User size={20} /> {(user?.role === 'admin' || user?.role === 'manager') ? 'Dashboard' : (user?.name?.split(' ')[0] || 'Profile')}
           </Link>
         ) : (
           <Link to="/login" className="mobile-link" onClick={() => setIsOpen(false)}>
