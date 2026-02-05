@@ -31,7 +31,7 @@
 }
 
 .timing-info h2 {
-    font-size: 2.2rem;
+    font-size: clamp(1.5rem, 4vw, 2.2rem);
     margin-bottom: 0.5rem;
 }
 
@@ -224,6 +224,24 @@
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 2rem;
     margin-bottom: 3rem;
+}
+
+@media (min-width: 1921px) {
+    .simple-grid {
+        grid-template-columns: repeat(3, 1fr);
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .plans-grid-simple {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (min-width: 2560px) {
+    .simple-grid {
+        max-width: 1800px;
+    }
 }
 
 .simple-card {

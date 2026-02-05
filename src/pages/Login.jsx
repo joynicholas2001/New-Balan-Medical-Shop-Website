@@ -167,8 +167,15 @@ const Login = () => {
 
                     <div className="form-group" style={{ marginBottom: '2rem' }}>
                         <label className="input-label">Password</label>
-                        <div className="input-with-icon">
-                            <Lock size={18} className="input-icon" />
+                        <div className="password-input-wrapper">
+                            <Lock size={18} className="input-icon" style={{
+                                position: 'absolute',
+                                left: '12px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                color: 'var(--gray-400)',
+                                zIndex: 6
+                            }} />
                             <input
                                 type={showPassword ? "text" : "password"}
                                 name="password"
@@ -177,22 +184,12 @@ const Login = () => {
                                 onChange={handleChange}
                                 placeholder="••••••••"
                                 className="styled-input"
-                                style={{ paddingRight: '2.5rem' }}
+                                style={{ paddingLeft: '3rem !important' }}
                             />
                             <button
                                 type="button"
+                                className="password-toggle-btn"
                                 onClick={() => setShowPassword(!showPassword)}
-                                style={{
-                                    position: 'absolute',
-                                    right: '12px',
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'var(--gray-400)',
-                                    cursor: 'pointer',
-                                    padding: '0'
-                                }}
                             >
                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                             </button>
@@ -240,6 +237,21 @@ const Login = () => {
                 .input-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-400); }
                 .styled-input { width: 100%; padding: 0.75rem 0.75rem 0.75rem 3.5rem !important; border-radius: 8px; border: 1px solid var(--gray-300); outline: none; transition: border-color 0.2s; }
                 .styled-input:focus { border-color: var(--primary); }
+                .password-input-wrapper { position: relative; }
+                .password-toggle-btn { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--gray-400); z-index: 6; display: flex; align-items: center; justify-content: center; }
+                
+                @media (max-width: 480px) {
+                    .login-card { padding: 1.5rem !important; border-radius: 12px !important; margin: 0 1rem; }
+                    .login-header h2 { font-size: 1.4rem !important; }
+                    .login-header p { font-size: 0.85rem !important; }
+                    .styled-input { padding: 0.65rem 0.65rem 0.65rem 3rem !important; font-size: 0.9rem; }
+                    .input-icon { left: 10px; width: 16px; height: 16px; }
+                }
+
+                @media (min-width: 1921px) {
+                    .login-card { max-width: 550px !important; padding: 3.5rem !important; }
+                    .login-header h2 { font-size: 2.2rem !important; }
+                }
             `}</style>
         </div >
     );

@@ -95,7 +95,9 @@ const Checkout = () => {
         if (!formData.city) errors.city = 'Required';
         if (!formData.state) errors.state = 'Required';
         if (!formData.pincode) errors.pincode = 'Required';
-        if (deliverySettings.isEnabled && !formData.deliverySlot) errors.deliverySlot = 'Please select a slot';
+        if (!formData.pincode) errors.pincode = 'Required';
+        // Delivery slot validation removed
+        // if (deliverySettings.isEnabled && !formData.deliverySlot) errors.deliverySlot = 'Please select a slot';
 
         setFormErrors(errors);
         return Object.keys(errors).length === 0;
@@ -334,33 +336,8 @@ const Checkout = () => {
                                 </div>
                             </div>
 
-                            {deliverySettings.isEnabled && (
-                                <div className="checkout-section-divider">
-                                    <h3 className="checkout-section-title">Delivery Time Slot {formErrors.deliverySlot && <span className="error-text" style={{ color: 'red', fontSize: '0.8rem', marginLeft: '0.5rem' }}>* Required</span>}</h3>
-                                    <div className="slots-grid">
-                                        {deliverySettings.slots.filter(s => s.active).map(slot => (
-                                            <label
-                                                key={slot.id}
-                                                className={`slot-option ${formData.deliverySlot === slot.time ? 'selected' : ''}`}
-                                            >
-                                                <input
-                                                    type="radio"
-                                                    name="deliverySlot"
-                                                    value={slot.time}
-                                                    checked={formData.deliverySlot === slot.time}
-                                                    onChange={handleChange}
-                                                    style={{ display: 'none' }}
-                                                />
-                                                {slot.time}
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
 
-                            <button type="submit" className="btn-place-order">
-                                Proceed to Pay ₹{finalTotal.toFixed(2)}
-                            </button>
+
                         </form>
                     </div>
 
@@ -426,8 +403,14 @@ const Checkout = () => {
                                     <span>₹{finalTotal.toFixed(2)}</span>
                                 </div>
                             </div>
+
+                            <button type="button" onClick={handleInitiatePayment} className="btn-place-order">
+                                Proceed to Pay ₹{finalTotal.toFixed(2)}
+                            </button>
                         </div>
                     </div>
+
+
                 </div>
             </div>
 
@@ -452,43 +435,26 @@ const Checkout = () => {
                             </div>
                         ) : (
                             <div className="payment-options-grid">
-                                {(isMobile ?
-                                    // Mobile Options: GPay, PhonePe, Card
-                                    <>
-                                        <button className="payment-btn gpay" onClick={() => processPayment('Google Pay')}>
-                                            <span className="brand-logo">GPay</span>
-                                            <span>Google Pay</span>
-                                        </button>
-                                        <button className="payment-btn phonepe" onClick={() => processPayment('PhonePe')}>
-                                            <span className="brand-logo">Pe</span>
-                                            <span>PhonePe</span>
-                                        </button>
-                                        <button className="payment-btn card" onClick={() => processPayment('Card')}>
-                                            <CreditCard size={24} />
-                                            <span>Card / Debit</span>
-                                        </button>
-                                    </>
-                                    :
-                                    // Laptop Options: PhonePe, Net Banking, UPI, Card
-                                    <>
-                                        <button className="payment-btn phonepe" onClick={() => processPayment('PhonePe')}>
-                                            <span className="brand-logo">Pe</span>
-                                            <span>PhonePe</span>
-                                        </button>
-                                        <button className="payment-btn upi" onClick={() => processPayment('UPI')}>
-                                            <QrCode size={24} />
-                                            <span>UPI / QR</span>
-                                        </button>
-                                        <button className="payment-btn netbanking" onClick={() => processPayment('Net Banking')}>
-                                            <Building size={24} />
-                                            <span>Net Banking</span>
-                                        </button>
-                                        <button className="payment-btn card" onClick={() => processPayment('Card')}>
-                                            <CreditCard size={24} />
-                                            <span>Credit / Debit Card</span>
-                                        </button>
-                                    </>
-                                )}
+                                <button className="payment-btn gpay" onClick={() => processPayment('Google Pay')}>
+                                    <span className="brand-logo">GPay</span>
+                                    <span>Google Pay</span>
+                                </button>
+                                <button className="payment-btn phonepe" onClick={() => processPayment('PhonePe')}>
+                                    <span className="brand-logo">Pe</span>
+                                    <span>PhonePe</span>
+                                </button>
+                                <button className="payment-btn upi" onClick={() => processPayment('UPI')}>
+                                    <QrCode size={24} />
+                                    <span>UPI / QR</span>
+                                </button>
+                                <button className="payment-btn netbanking" onClick={() => processPayment('Net Banking')}>
+                                    <Building size={24} />
+                                    <span>Net Banking</span>
+                                </button>
+                                <button className="payment-btn card" onClick={() => processPayment('Card')}>
+                                    <CreditCard size={24} />
+                                    <span>Credit / Debit Card</span>
+                                </button>
                             </div>
                         )}
 
@@ -499,8 +465,9 @@ const Checkout = () => {
                         </div>
                     </div>
                 </div>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 };
 

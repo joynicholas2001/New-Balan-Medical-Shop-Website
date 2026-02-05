@@ -37,9 +37,17 @@
     }
 }
 
-@media (min-width: 1920px) {
+@media (min-width: 1921px) {
     .footer-grid {
         grid-template-columns: repeat(4, 1fr);
+        gap: 5rem;
+    }
+}
+
+@media (min-width: 2560px) {
+    .footer-grid {
+        max-width: 2000px;
+        margin: 0 auto;
     }
 }
 
@@ -72,10 +80,9 @@
 }
 
 .footer-brand .logo-main {
-    font-size: 1.9rem;
+    font-size: clamp(1.4rem, 3vw, 2rem);
     font-weight: 800;
     color: #4da3ff;
-    /* Lighter blue for dark background */
     line-height: 1;
     font-family: 'Outfit', sans-serif;
     letter-spacing: -0.03em;
@@ -83,10 +90,9 @@
 }
 
 .footer-brand .logo-sub {
-    font-size: 1.1rem;
+    font-size: clamp(0.9rem, 1.5vw, 1.1rem);
     font-weight: 600;
     color: #44cf6c;
-    /* Lighter green for dark background */
     margin-top: 3px;
     font-family: 'Inter', sans-serif;
     letter-spacing: -0.01em;

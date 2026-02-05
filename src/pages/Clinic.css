@@ -15,76 +15,225 @@
     color: var(--primary);
 }
 
-.doctor-card {
+.professional-doc-card {
     background: var(--white);
-    border-radius: var(--radius-lg);
+    border-radius: 1.25rem;
     display: flex;
-    gap: 2rem;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    box-shadow: var(--shadow);
+    gap: 0;
+    margin-bottom: 2.5rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
     border: 1px solid var(--gray-100);
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
 }
 
-.doc-image {
-    position: relative;
-    width: 140px;
-    height: 140px;
+.professional-doc-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    border-color: var(--primary-light);
+}
+
+/* Side Profile Area */
+.doc-profile-side {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    width: 220px;
+    padding: 2.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-right: 1px solid var(--gray-100);
     flex-shrink: 0;
 }
 
-.doc-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: var(--radius);
+.doc-avatar {
+    position: relative;
+    margin-bottom: 1.5rem;
 }
 
-.status-indicator {
-    position: absolute;
-    bottom: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
+.avatar-circle {
+    width: 100px;
+    height: 100px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
     font-weight: 700;
-    white-space: nowrap;
-    box-shadow: var(--shadow-sm);
-}
-
-.status-indicator.online {
-    background: #e6fffa;
-    color: #2c7a7b;
-}
-
-.status-indicator.offline {
-    background: #fff5f5;
-    color: #c53030;
-}
-
-.doc-info h3 {
-    font-size: 1.4rem;
-    margin-bottom: 0.25rem;
-}
-
-.doc-spec {
     color: var(--primary);
-    font-weight: 700;
-    font-size: 0.95rem;
-    margin-bottom: 0.25rem;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+    border: 3px solid white;
 }
 
-.doc-qual {
-    color: var(--gray-400);
-    font-size: 0.85rem;
+.online-dot {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 3px solid white;
+}
+
+.online-dot.active {
+    background: #10b981;
+}
+
+.online-dot.inactive {
+    background: #94a3b8;
+}
+
+.status-pill {
+    padding: 0.4rem 1rem;
+    border-radius: 2rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-pill.online {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.status-pill.offline {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+/* Content Area */
+.doc-content-side {
+    padding: 2.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.doc-header-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.65rem;
     margin-bottom: 1rem;
 }
 
-.doc-timings {
+.doc-header-info h3 {
+    font-size: clamp(1.2rem, 3.5vw, 1.8rem);
+    color: var(--gray-900);
+    margin: 0;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.specialty-badge {
+    background: #f0f9ff;
+    color: #0369a1;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: 1px solid #bae6fd;
+    display: inline-block;
+}
+
+.doc-sub-text {
+    color: var(--gray-500);
+    font-size: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.doc-meta {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--gray-600);
+    font-weight: 500;
+}
+
+.meta-item svg {
+    color: var(--primary);
+}
+
+.timing-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    background: #f8fafc;
+    padding: 1.25rem;
+    border-radius: 0.75rem;
+    margin-bottom: 2rem;
+}
+
+.timing-slot {
     display: flex;
     flex-direction: column;
+    gap: 0.25rem;
+}
+
+.slot-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--gray-400);
+    letter-spacing: 0.5px;
+}
+
+.slot-time {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.doc-card-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: auto;
+}
+
+.btn-book-now {
+    flex: 2;
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 0.85rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.btn-book-now:hover {
+    opacity: 0.9;
+}
+
+.btn-call {
+    flex: 1;
+    background: white;
+    color: var(--gray-700);
+    border: 1px solid var(--gray-200);
+    padding: 0.85rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-call:hover {
+    background: #f8fafc;
+    border-color: var(--gray-300);
 }
 
 .timing-row {
@@ -198,24 +347,132 @@
     width: 100%;
 }
 
-@media (max-width: 968px) {
-    .doctor-card {
+@media (max-width: 768px) {
+    .professional-doc-card {
         flex-direction: column;
-        text-align: center;
     }
 
-    .doc-image {
-        margin: 0 auto;
+    .doc-profile-side {
+        width: 100%;
+        padding: 1.5rem 1.5rem 0.5rem;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 1.5rem;
+        border: none;
+        background: transparent;
     }
 
-    .timing-row {
-        justify-content: center;
+    .doc-avatar {
+        margin-bottom: 0;
+    }
+
+    .avatar-circle {
+        width: 70px;
+        height: 70px;
+        font-size: 1.5rem;
+    }
+
+    .status-pill {
+        margin-left: auto;
+    }
+
+    .doc-content-side {
+        padding: 1rem 1.5rem 1.5rem;
+    }
+
+    .doc-header-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .doc-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .timing-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .doc-card-actions {
+        flex-direction: column;
     }
 }
 
-@media (min-width: 1920px) {
+@media (min-width: 1921px) {
     .doctors-section .grid-2 {
-        grid-template-columns: 1fr 450px;
-        gap: 5rem;
+        grid-template-columns: 1fr 500px;
+        gap: 6rem;
+        max-width: 1700px;
+        margin: 0 auto;
+    }
+}
+
+@media (min-width: 2560px) {
+    .doctors-section .grid-2 {
+        max-width: 2100px;
+        grid-template-columns: 1fr 600px;
+    }
+}
+
+/* Services Highlight Grid */
+.clinic-services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 2rem;
+    margin-top: 3rem;
+    margin-bottom: 2rem;
+}
+
+.service-highlight-card {
+    background: #f8fafc;
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    text-align: center;
+    transition: all 0.3s ease;
+    border: 1px solid #e2e8f0;
+}
+
+.service-highlight-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    border-color: var(--primary-light);
+    background: white;
+}
+
+.service-icon-box {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.service-highlight-card h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+    color: var(--gray-800);
+}
+
+.service-highlight-card p {
+    font-size: 0.95rem;
+    color: var(--gray-600);
+    line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+    .clinic-services-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .service-highlight-card {
+        padding: 1.5rem;
     }
 }

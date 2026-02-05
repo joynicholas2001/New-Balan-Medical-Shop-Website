@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Users, Pill, ShoppingCart, Search, Plus, Trash2, Check, X, Menu, Clock, MapPin, Phone, Pencil, AlertCircle, Eye, CheckCircle, XCircle, LogOut, Bell, Truck, Ticket, UserCheck, Filter, IndianRupee } from 'lucide-react';
+import { LayoutDashboard, Users, Pill, ShoppingCart, Search, Plus, Trash2, Check, X, Menu, Clock, MapPin, Phone, Pencil, AlertCircle, Eye, EyeOff, CheckCircle, XCircle, LogOut, Bell, Truck, Ticket, UserCheck, Filter, IndianRupee, ArrowLeft, ChevronRight } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import './Admin.css';
@@ -32,9 +32,11 @@ const Admin = () => {
     const [showModal, setShowModal] = useState(false);
     const [modalMode, setModalMode] = useState('add'); // 'add' or 'edit'
     const [editingId, setEditingId] = useState(null);
+    const [visibleTablePasswords, setVisibleTablePasswords] = useState({});
 
     // Order Detail Modal State
     const [selectedOrder, setSelectedOrder] = useState(null);
+    const [showStaffPassword, setShowStaffPassword] = useState(false);
 
     // Notifications state
     const [notifications, setNotifications] = useState([]);
@@ -352,8 +354,8 @@ const Admin = () => {
     }, [user, availableMenuItems, activeTab]);
 
 
-    const filteredDoctors = doctors.filter(d => d.name.toLowerCase().includes(searchTerm.toLowerCase()));
-    const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filteredDoctors = (doctors || []).filter(d => (d && d.name && d.name.toLowerCase().includes(searchTerm.toLowerCase())));
+    const filteredProducts = (products || []).filter(p => (p && p.name && p.name.toLowerCase().includes(searchTerm.toLowerCase())));
 
     return (
         <div className="admin-layout animate-fade">
@@ -478,8 +480,8 @@ const Admin = () => {
                             <div className="dashboard-grid-activity" style={{ marginTop: '3rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem' }}>
                                 {hasPermission('appointments') && (
                                     <div className="recent-activity">
-                                        <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 800 }}><Clock size={20} /> Recent Appointments</h3>
-                                        <div className="table-container">
+                                        <div className="admin-table-card">
+                                            <h3 style={{ padding: '1.25rem 1.5rem', background: '#f1f5f9', margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 800, borderBottom: '1px solid #e2e8f0' }}><Clock size={20} /> Recent Appointments</h3>
                                             <div className="table-wrapper">
                                                 <table className="admin-table">
                                                     <thead>
@@ -509,8 +511,8 @@ const Admin = () => {
 
                                 {hasPermission('orders') && (
                                     <div className="recent-activity">
-                                        <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 800 }}><ShoppingCart size={20} /> Recent Orders</h3>
-                                        <div className="table-container">
+                                        <div className="admin-table-card">
+                                            <h3 style={{ padding: '1.25rem 1.5rem', background: '#f1f5f9', margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 800, borderBottom: '1px solid #e2e8f0' }}><ShoppingCart size={20} /> Recent Orders</h3>
                                             <div className="table-wrapper">
                                                 <table className="admin-table">
                                                     <thead>
@@ -543,7 +545,7 @@ const Admin = () => {
 
                     {/* Doctors Tab */}
                     {activeTab === 'doctors' && (
-                        <div className="table-container animate-slide-up">
+                        <div className="admin-table-card animate-slide-up">
                             <div className="table-actions">
                                 <div className="table-search"><Search size={18} /><input type="text" placeholder="Search doctors..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setDoctorsPage(1); }} /></div>
                                 <button className="btn-add" onClick={() => { setModalMode('add'); setDoctorForm({ name: '', specialty: '', morning: '10:00 AM - 1:00 PM', evening: '5:00 PM - 9:00 PM', available: true }); setShowModal(true); }}><Plus size={18} /> Add Doctor</button>
@@ -595,7 +597,7 @@ const Admin = () => {
 
                     {/* Medicines Tab */}
                     {activeTab === 'medicines' && (
-                        <div className="table-container animate-slide-up">
+                        <div className="admin-table-card animate-slide-up">
                             <div className="table-actions">
                                 <div className="table-search"><Search size={18} /><input type="text" placeholder="Search medicines..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setMedicinesPage(1); }} /></div>
                                 <button className="btn-add" onClick={() => { setModalMode('add'); setProductForm({ name: '', category: categories?.[0] || 'OTC', price: '', image: '', discount: '0', requiresPrescription: false, stock: true }); setShowModal(true); }}><Plus size={18} /> Add Product</button>
@@ -651,24 +653,40 @@ const Admin = () => {
 
                     {/* Orders Tab */}
                     {activeTab === 'orders' && (
-                        <div className="table-container animate-slide-up">
+                        <div className="admin-table-card animate-slide-up">
                             <div className="table-actions">
                                 <div className="table-search"><Search size={18} /><input type="text" placeholder="Search orders..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setOrdersPage(1); }} /></div>
                                 <button className="btn-add" onClick={() => { setModalMode('add'); setOrderForm({ customerId: '', customerName: '', phone: '', address: '', total: '', paymentMethod: 'cash' }); setShowModal(true); }}><Plus size={18} /> Add Order</button>
                             </div>
                             <div className="scrollable-section-wrapper">
                                 <div className="table-wrapper">
-                                    <table className="admin-table">
-                                        <thead><tr><th>Order ID</th><th>Customer ID</th><th>Customer</th><th>Prescription ID</th><th>Product IDs</th><th>Date</th><th>Total</th><th>Status</th><th>Processed By</th><th>Actions</th></tr></thead>
+                                    <table className="admin-table orders-table">
+                                        <thead><tr><th>Order ID</th><th>Customer</th><th>Items Ordered</th><th>Date</th><th>Total</th><th>Status</th><th>Processed By</th><th>Actions</th></tr></thead>
                                         <tbody>{orders
                                             .slice((ordersPage - 1) * adminItemsPerPage, ordersPage * adminItemsPerPage)
                                             .map(order => (
                                                 <tr key={order.id}>
                                                     <td data-label="Order ID">{order.id}</td>
-                                                    <td data-label="Customer ID"><code style={{ fontSize: '0.75rem', background: '#f1f5f9', padding: '0.2rem 0.4rem', borderRadius: '4px' }}>{order.customerId || 'N/A'}</code></td>
-                                                    <td data-label="Customer">{order.customerName}</td>
-                                                    <td data-label="Prescription ID"><code style={{ fontSize: '0.75rem', background: order.prescriptionId !== 'N/A' ? '#fef3c7' : '#f1f5f9', padding: '0.2rem 0.4rem', borderRadius: '4px', color: order.prescriptionId !== 'N/A' ? '#92400e' : 'inherit' }}>{order.prescriptionId || 'N/A'}</code></td>
-                                                    <td data-label="Product IDs"><code style={{ fontSize: '0.7rem', background: '#f1f5f9', padding: '0.2rem 0.4rem', borderRadius: '4px', maxWidth: '150px', display: 'inline-block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={order.productIds}>{order.productIds || 'N/A'}</code></td>
+                                                    <td data-label="Customer">
+                                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                            <span>{order.customerName}</span>
+                                                            <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{order.phone}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td data-label="Ordered Items">
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                                            {order.items && order.items.length > 0 ? (
+                                                                order.items.map((item, idx) => (
+                                                                    <div key={idx} style={{ fontSize: '0.85rem', lineHeight: '1.3', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                                        <span>• {item.name} <span style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 600 }}>x{item.quantity}</span></span>
+                                                                        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#0f172a' }}>₹{item.price ? (item.price * item.quantity).toFixed(0) : '-'}</span>
+                                                                    </div>
+                                                                ))
+                                                            ) : (
+                                                                <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>IDs: {order.productIds || 'N/A'}</span>
+                                                            )}
+                                                        </div>
+                                                    </td>
                                                     <td data-label="Date">{order.date || new Date(order.timestamp || Date.now()).toLocaleDateString()}</td>
                                                     <td data-label="Total">₹{order.total}</td>
                                                     <td data-label="Status">
@@ -732,7 +750,7 @@ const Admin = () => {
 
                     {/* Appointments Tab */}
                     {activeTab === 'appointments' && (
-                        <div className="table-container animate-slide-up">
+                        <div className="admin-table-card animate-slide-up">
                             <div className="table-actions">
                                 <div className="table-search"><Search size={18} /><input type="text" placeholder="Search appointments..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setAppointmentsPage(1); }} /></div>
                                 <button className="btn-add" onClick={() => { setModalMode('add'); setAppointmentForm({ patientName: '', phone: '', doctorName: '', message: '', status: 'Confirmed' }); setShowModal(true); }}><Plus size={18} /> Add Appointment</button>
@@ -830,49 +848,51 @@ const Admin = () => {
                                 </div>
                             </div>
 
-                            <div className="table-container">
+                            <div className="admin-table-card">
                                 <div className="table-actions">
                                     <h3 style={{ fontWeight: 800 }}>Time Windows</h3>
                                     <button className="btn-add" onClick={() => { setModalMode('add'); setSlotForm({ start: '09:00', end: '11:00', active: true }); setShowModal(true); }}>
                                         <Plus size={18} /> Add Slot
                                     </button>
                                 </div>
-                                <div className="table-wrapper">
-                                    <table className="admin-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Time Slot</th>
-                                                <th>Status</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {deliverySettings.slots.map(slot => (
-                                                <tr key={slot.id}>
-                                                    <td data-label="Time Slot">{slot.time}</td>
-                                                    <td data-label="Status">
-                                                        <span className={`status-tag ${slot.active ? 'active' : 'inactive'}`}>
-                                                            {slot.active ? 'Active' : 'Hidden'}
-                                                        </span>
-                                                    </td>
-                                                    <td data-label="Actions" className="actions">
-                                                        <button className="action-btn" onClick={() => {
-                                                            setModalMode('edit');
-                                                            setEditingId(slot.id);
-                                                            const [start12, end12] = slot.time.split(' - ');
-                                                            setSlotForm({
-                                                                start: parseTimeFrom12h(start12),
-                                                                end: parseTimeFrom12h(end12),
-                                                                active: slot.active
-                                                            });
-                                                            setShowModal(true);
-                                                        }}><Pencil size={16} /></button>
-                                                        <button className="action-btn delete" onClick={() => deleteSlot(slot.id)}><Trash2 size={16} /></button>
-                                                    </td>
+                                <div className="scrollable-section-wrapper">
+                                    <div className="table-wrapper">
+                                        <table className="admin-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Time Slot</th>
+                                                    <th>Status</th>
+                                                    <th>Actions</th>
                                                 </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                            </thead>
+                                            <tbody>
+                                                {deliverySettings?.slots?.map(slot => (
+                                                    <tr key={slot.id}>
+                                                        <td data-label="Time Slot">{slot.time}</td>
+                                                        <td data-label="Status">
+                                                            <span className={`status-tag ${slot.active ? 'active' : 'inactive'}`}>
+                                                                {slot.active ? 'Active' : 'Hidden'}
+                                                            </span>
+                                                        </td>
+                                                        <td data-label="Actions" className="actions">
+                                                            <button className="action-btn" onClick={() => {
+                                                                setModalMode('edit');
+                                                                setEditingId(slot.id);
+                                                                const [start12, end12] = slot.time.split(' - ');
+                                                                setSlotForm({
+                                                                    start: parseTimeFrom12h(start12),
+                                                                    end: parseTimeFrom12h(end12),
+                                                                    active: slot.active
+                                                                });
+                                                                setShowModal(true);
+                                                            }}><Pencil size={16} /></button>
+                                                            <button className="action-btn delete" onClick={() => deleteSlot(slot.id)}><Trash2 size={16} /></button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -914,76 +934,92 @@ const Admin = () => {
                                 </div>
                             </div>
 
-                            <div className="table-container">
+                            <div className="admin-table-card">
                                 <div className="table-actions">
                                     <div className="table-search"><Search size={18} /><input type="text" placeholder="Search coupons..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
                                     <button className="btn-add" onClick={() => { setModalMode('add'); setCouponForm({ code: '', discount: 2, isActive: true, expiryDate: '' }); setShowModal(true); }}><Plus size={18} /> Create Coupon</button>
                                 </div>
-                                <div className="table-wrapper">
-                                    <table className="admin-table">
-                                        <thead><tr><th>Code</th><th>Discount (%)</th><th>Expiry</th><th>Status</th><th>Actions</th></tr></thead>
-                                        <tbody>
-                                            {coupons.filter(c => c.code.toLowerCase().includes(searchTerm.toLowerCase())).map(coupon => (
-                                                <tr key={coupon.id}>
-                                                    <td data-label="Code"><strong style={{ color: 'var(--primary)' }}>{coupon.code}</strong></td>
-                                                    <td data-label="Discount (%)">{coupon.discount}%</td>
-                                                    <td data-label="Expiry">{coupon.expiryDate ? new Date(coupon.expiryDate).toLocaleDateString() : 'No Limit'}</td>
-                                                    <td data-label="Status">
-                                                        <span className={`status-tag ${coupon.isActive ? 'active' : 'inactive'}`} style={{ cursor: 'pointer' }} onClick={() => updateCoupon(coupon.id, { isActive: !coupon.isActive })}>
-                                                            {coupon.isActive ? 'Active' : 'Disabled'}
-                                                        </span>
-                                                    </td>
-                                                    <td data-label="Actions" className="actions">
-                                                        <button className="action-btn" onClick={() => startEditCoupon(coupon)} title="Edit"><Pencil size={16} /></button>
-                                                        <button className="action-btn delete" onClick={() => requestDelete('coupon', coupon.id, coupon.code)} title="Delete"><Trash2 size={16} /></button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                            {coupons.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center', padding: '3rem' }}>No coupons created yet.</td></tr>}
-                                        </tbody>
-                                    </table>
+                                <div className="scrollable-section-wrapper">
+                                    <div className="table-wrapper">
+                                        <table className="admin-table">
+                                            <thead><tr><th>Code</th><th>Discount (%)</th><th>Expiry</th><th>Status</th><th>Actions</th></tr></thead>
+                                            <tbody>
+                                                {coupons.filter(c => c.code.toLowerCase().includes(searchTerm.toLowerCase())).map(coupon => (
+                                                    <tr key={coupon.id}>
+                                                        <td data-label="Code"><strong style={{ color: 'var(--primary)' }}>{coupon.code}</strong></td>
+                                                        <td data-label="Discount (%)">{coupon.discount}%</td>
+                                                        <td data-label="Expiry">{coupon.expiryDate ? new Date(coupon.expiryDate).toLocaleDateString() : 'No Limit'}</td>
+                                                        <td data-label="Status">
+                                                            <span className={`status-tag ${coupon.isActive ? 'active' : 'inactive'}`} style={{ cursor: 'pointer' }} onClick={() => updateCoupon(coupon.id, { isActive: !coupon.isActive })}>
+                                                                {coupon.isActive ? 'Enabled' : 'Disabled'}
+                                                            </span>
+                                                        </td>
+                                                        <td data-label="Actions" className="actions">
+                                                            <button className="action-btn" onClick={() => startEditCoupon(coupon)} title="Edit"><Pencil size={16} /></button>
+                                                            <button className="action-btn delete" onClick={() => requestDelete('coupon', coupon.id, coupon.code)} title="Delete"><Trash2 size={16} /></button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                                {coupons.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center', padding: '3rem' }}>No coupons created yet.</td></tr>}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     )}
                     {/* Staff Tab */}
                     {activeTab === 'staff' && (
-                        <div className="table-container staff-table-container animate-slide-up">
+                        <div className="admin-table-card staff-table-card animate-slide-up">
                             <div className="table-actions">
                                 <div className="table-search"><Search size={18} /><input type="text" placeholder="Search staff..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
                                 <button className="btn-add" onClick={() => { setModalMode('add'); setManagerForm({ name: '', email: '', password: '', permissions: [] }); setShowModal(true); }}><Plus size={18} /> Add Manager</button>
                             </div>
-                            <div className="table-wrapper">
-                                <table className="admin-table">
-                                    <thead><tr><th>Name</th><th>Email</th><th>Password</th><th>Rights</th><th>Actions</th></tr></thead>
-                                    <tbody>
-                                        {managers.filter(m => m.name.toLowerCase().includes(searchTerm.toLowerCase())).map(manager => (
-                                            <tr key={manager.id}>
-                                                <td data-label="Name"><strong>{manager.name}</strong></td>
-                                                <td data-label="Email">{manager.email}</td>
-                                                <td data-label="Password"><code style={{ background: '#f8fafc', padding: '0.2rem 0.4rem', borderRadius: '4px', fontSize: '0.85rem' }}>{manager.password}</code></td>
-                                                <td data-label="Rights">
-                                                    <div className="staff-rights-list">
-                                                        {manager.permissions.map(p => (
-                                                            <span key={p} className="status-tag active" style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem' }}>{p}</span>
-                                                        ))}
-                                                        {manager.permissions.length === 0 && <span style={{ color: 'var(--admin-text-muted)', fontSize: '0.75rem' }}>No Rights</span>}
-                                                    </div>
-                                                </td>
-                                                <td data-label="Actions" className="actions">
-                                                    <button className="action-btn" onClick={() => {
-                                                        setModalMode('edit');
-                                                        setEditingId(manager.id);
-                                                        setManagerForm({ ...manager });
-                                                        setShowModal(true);
-                                                    }} title="Edit"><Pencil size={16} /></button>
-                                                    <button className="action-btn delete" onClick={() => requestDelete('manager', manager.id, manager.name)} title="Delete"><Trash2 size={16} /></button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        {managers.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center', padding: '3rem' }}>No managers added yet.</td></tr>}
-                                    </tbody>
-                                </table>
+                            <div className="scrollable-section-wrapper">
+                                <div className="table-wrapper">
+                                    <table className="admin-table">
+                                        <thead><tr><th>Name</th><th>Email</th><th>Password</th><th>Rights</th><th>Actions</th></tr></thead>
+                                        <tbody>
+                                            {managers.filter(m => m.name.toLowerCase().includes(searchTerm.toLowerCase())).map(manager => (
+                                                <tr key={manager.id}>
+                                                    <td data-label="Name"><strong>{manager.name}</strong></td>
+                                                    <td data-label="Email">{manager.email}</td>
+                                                    <td data-label="Password">
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                            <code style={{ background: '#f8fafc', padding: '0.2rem 0.4rem', borderRadius: '4px', fontSize: '0.85rem', flex: 1 }}>
+                                                                {visibleTablePasswords[manager.id] ? manager.password : '••••••••'}
+                                                            </code>
+                                                            <button
+                                                                onClick={() => setVisibleTablePasswords(prev => ({ ...prev, [manager.id]: !prev[manager.id] }))}
+                                                                style={{ background: 'none', border: 'none', color: 'var(--admin-text-muted)', cursor: 'pointer', padding: '4px' }}
+                                                            >
+                                                                {visibleTablePasswords[manager.id] ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                    <td data-label="Rights">
+                                                        <div className="staff-rights-list">
+                                                            {manager.permissions.map(p => (
+                                                                <span key={p} className="status-tag active" style={{ fontSize: '0.65rem', padding: '0.1rem 0.4rem' }}>{p}</span>
+                                                            ))}
+                                                            {manager.permissions.length === 0 && <span style={{ color: 'var(--admin-text-muted)', fontSize: '0.75rem' }}>No Rights</span>}
+                                                        </div>
+                                                    </td>
+                                                    <td data-label="Actions" className="actions">
+                                                        <button className="action-btn" onClick={() => {
+                                                            setModalMode('edit');
+                                                            setEditingId(manager.id);
+                                                            setManagerForm({ ...manager });
+                                                            setShowModal(true);
+                                                        }} title="Edit"><Pencil size={16} /></button>
+                                                        <button className="action-btn delete" onClick={() => requestDelete('manager', manager.id, manager.name)} title="Delete"><Trash2 size={16} /></button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {managers.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center', padding: '3rem' }}>No managers added yet.</td></tr>}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -1019,7 +1055,7 @@ const Admin = () => {
                                     </button>
                                 </div>
 
-                                <div className="table-container" style={{ border: 'none', boxShadow: 'none' }}>
+                                <div className="admin-table-card" style={{ border: 'none', boxShadow: 'none' }}>
                                     <div className="scrollable-section-wrapper">
                                         <div className="table-wrapper">
                                             <table className="admin-table">
@@ -1030,7 +1066,7 @@ const Admin = () => {
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {categories
+                                                    {(categories || [])
                                                         .filter(cat => cat.toLowerCase().includes(searchTerm.toLowerCase()))
                                                         .slice((categoriesPage - 1) * adminItemsPerPage, categoriesPage * adminItemsPerPage)
                                                         .map(cat => (
@@ -1067,11 +1103,11 @@ const Admin = () => {
                                                 <ArrowLeft size={18} /> Prev
                                             </button>
                                             <div className="page-numbers">
-                                                Page <span>{categoriesPage}</span> of {Math.ceil(categories.filter(cat => cat.toLowerCase().includes(searchTerm.toLowerCase())).length / adminItemsPerPage)}
+                                                Page <span>{categoriesPage}</span> of {Math.ceil((categories || []).filter(cat => cat.toLowerCase().includes(searchTerm.toLowerCase())).length / adminItemsPerPage)}
                                             </div>
                                             <button
-                                                onClick={() => setCategoriesPage(p => Math.min(Math.ceil(categories.filter(cat => cat.toLowerCase().includes(searchTerm.toLowerCase())).length / adminItemsPerPage), p + 1))}
-                                                disabled={categoriesPage === Math.ceil(categories.filter(cat => cat.toLowerCase().includes(searchTerm.toLowerCase())).length / adminItemsPerPage)}
+                                                onClick={() => setCategoriesPage(p => Math.min(Math.ceil((categories || []).filter(cat => cat.toLowerCase().includes(searchTerm.toLowerCase())).length / adminItemsPerPage), p + 1))}
+                                                disabled={categoriesPage === Math.ceil((categories || []).filter(cat => cat.toLowerCase().includes(searchTerm.toLowerCase())).length / adminItemsPerPage)}
                                                 className="page-nav-btn"
                                             >
                                                 Next <ChevronRight size={18} />
@@ -1128,7 +1164,7 @@ const Admin = () => {
                                                 setProductForm({ ...productForm, category: newCat });
                                             }}
                                         >
-                                            {categories.map(cat => (
+                                            {categories?.map(cat => (
                                                 <option key={cat} value={cat}>{cat}</option>
                                             ))}
                                         </select>
@@ -1176,7 +1212,7 @@ const Admin = () => {
                                         <label>Doctor</label>
                                         <select value={appointmentForm.doctorName} onChange={e => setAppointmentForm({ ...appointmentForm, doctorName: e.target.value })}>
                                             <option value="">Select Doctor</option>
-                                            {doctors.map(d => <option key={d.id} value={d.name}>{d.name} ({d.specialty})</option>)}
+                                            {doctors?.map(d => <option key={d.id} value={d.name}>{d.name} ({d.specialty})</option>)}
                                         </select>
                                     </div>
                                     <div className="form-group"><label>Internal Note</label><textarea value={appointmentForm.message} onChange={e => setAppointmentForm({ ...appointmentForm, message: e.target.value })}></textarea></div>
@@ -1243,7 +1279,24 @@ const Admin = () => {
                                 <>
                                     <div className="form-group"><label>Full Name*</label><input type="text" required value={managerForm.name} onChange={e => setManagerForm({ ...managerForm, name: e.target.value })} /></div>
                                     <div className="form-group"><label>Email Address*</label><input type="email" required value={managerForm.email} onChange={e => setManagerForm({ ...managerForm, email: e.target.value })} /></div>
-                                    <div className="form-group"><label>Password*</label><input type="password" required value={managerForm.password} onChange={e => setManagerForm({ ...managerForm, password: e.target.value })} /></div>
+                                    <div className="form-group">
+                                        <label>Password*</label>
+                                        <div className="password-input-wrapper">
+                                            <input
+                                                type={showStaffPassword ? "text" : "password"}
+                                                required
+                                                value={managerForm.password}
+                                                onChange={e => setManagerForm({ ...managerForm, password: e.target.value })}
+                                            />
+                                            <button
+                                                type="button"
+                                                className="password-toggle-btn"
+                                                onClick={() => setShowStaffPassword(!showStaffPassword)}
+                                            >
+                                                {showStaffPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                            </button>
+                                        </div>
+                                    </div>
                                     <div className="form-group">
                                         <label style={{ marginBottom: '1rem', display: 'block' }}>Assign Rights (Permissions):*</label>
                                         <div className="permissions-grid">
@@ -1269,9 +1322,14 @@ const Admin = () => {
                                     </div>
                                 </>
                             )}
-                            <button type="submit" className="btn-add" style={{ width: '100%', marginTop: '1rem' }}>
-                                {modalMode === 'add' ? 'Confirm Addition' : 'Save Changes'}
-                            </button>
+                            <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                                <button type="button" className="btn-add btn-cancel" style={{ flex: 1 }} onClick={() => setShowModal(false)}>
+                                    Cancel
+                                </button>
+                                <button type="submit" className="btn-add" style={{ flex: 2 }}>
+                                    {modalMode === 'add' ? 'Confirm Addition' : 'Save Changes'}
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -1293,7 +1351,7 @@ const Admin = () => {
                         </div>
                         <div className="order-items-list">
                             <h4>Items Ordered</h4>
-                            <table>
+                            <table className="details-table">
                                 <thead><tr><th>Medicine</th><th>Qty</th><th>Subtotal</th></tr></thead>
                                 <tbody>
                                     {selectedOrder.items.map((item, idx) => (
@@ -1304,6 +1362,9 @@ const Admin = () => {
                         </div>
                         <div className="order-total-footer">
                             <p style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)' }}>Total Amount: ₹{selectedOrder.total}</p>
+                            <button className="btn-add btn-cancel" style={{ width: '100%', marginTop: '1.5rem' }} onClick={() => setSelectedOrder(null)}>
+                                Close Details
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -4,9 +4,30 @@
     min-height: 90vh;
 }
 
+
+.back-link {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.95rem;
+    padding: 0;
+    margin-bottom: 1rem;
+    transition: color 0.2s;
+}
+
+.back-link:hover {
+    color: var(--primary);
+    text-decoration: underline;
+}
+
 .checkout-main-title {
     margin-bottom: 2rem;
-    font-size: 1.8rem;
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
     font-weight: 800;
 }
 
@@ -491,13 +512,15 @@
 }
 
 /* TV / Large Screen Optimizations */
-@media (min-width: 1920px) {
+@media (min-width: 1921px) {
     .container {
         max-width: 1600px;
     }
 
     .checkout-grid {
         gap: 5rem;
+        max-width: 1800px;
+        margin: 0 auto;
     }
 
     .checkout-input,

@@ -32,17 +32,23 @@
     /* Ensure padding on mobile to prevent edge touching */
 }
 
-@media (min-width: 1920px) {
+@media (min-width: 1921px) {
     .specialty-grid {
         grid-template-columns: repeat(3, 1fr);
-        max-width: 1200px;
+        max-width: 1400px;
         margin: 0 auto;
+    }
+}
+
+@media (min-width: 2561px) {
+    .specialty-grid {
+        max-width: 1800px;
     }
 }
 
 .section-header p {
     color: var(--gray-500);
-    font-size: 1.1rem;
+    font-size: clamp(0.95rem, 1.5vw, 1.1rem);
 }
 
 /* Specialty Cards */
@@ -139,7 +145,7 @@
 
 .star-content {
     display: flex;
-    gap: 2rem;
+    gap: clamp(1rem, 3vw, 2rem);
     align-items: center;
 }
 

@@ -356,7 +356,7 @@ const Profile = () => {
 
     return (
         <div className="dashboard-page-wrapper">
-            <div className="dashboard-layout animate-fade">
+            <div className="dashboard-layout">
                 {/* Sidebar */}
                 <aside className={`dashboard-sidebar ${isSidebarCollapsed ? 'collapsed' : ''} ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
                     <div className="sidebar-brand">
@@ -399,10 +399,7 @@ const Profile = () => {
                             <button className="mobile-toggle" onClick={() => setIsMobileMenuOpen(true)}>
                                 <Menu size={24} />
                             </button>
-                            <div className="header-search">
-                                <Search size={18} />
-                                <input type="text" placeholder="Search for medicines, doctors..." />
-                            </div>
+
                         </div>
 
                         <div className="header-actions">

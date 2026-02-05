@@ -58,8 +58,15 @@ export const DataProvider = ({ children }) => {
     });
 
     const [categories, setCategories] = useState(() => {
-        const saved = localStorage.getItem('nb_categories');
-        if (saved) return JSON.parse(saved);
+        try {
+            const saved = localStorage.getItem('nb_categories');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed)) return parsed;
+            }
+        } catch (e) {
+            console.error("Failed to parse categories from local storage", e);
+        }
 
         // Extract from initial products if none saved
         const initialCategories = [...new Set(initialProducts.map(p => p.category))];

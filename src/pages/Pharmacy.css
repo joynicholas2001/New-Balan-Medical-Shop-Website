@@ -8,7 +8,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 3rem;
+    gap: clamp(1.5rem, 5vw, 3rem);
     width: 100%;
 }
 
@@ -255,8 +255,23 @@
 /* Product Grid */
 .product-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.5rem;
+}
+
+@media (min-width: 1921px) {
+    .product-grid {
+        grid-template-columns: repeat(5, 1fr);
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+}
+
+@media (min-width: 2560px) {
+    .product-grid {
+        grid-template-columns: repeat(6, 1fr);
+        max-width: 2000px;
+    }
 }
 
 @media (max-width: 1200px) {

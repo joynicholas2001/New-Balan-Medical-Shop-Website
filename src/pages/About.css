@@ -29,10 +29,10 @@
 }
 
 .founder-text p {
-    font-size: 1.15rem;
+    font-size: clamp(1rem, 1.25vw, 1.15rem);
     line-height: 1.8;
     color: var(--gray-600);
-    margin-bottom: 3rem;
+    margin-bottom: clamp(1.5rem, 5vh, 3rem);
 }
 
 .founder-text .stats-grid {
@@ -71,6 +71,12 @@
     position: relative;
     max-width: 1200px;
     margin: 0 auto;
+}
+
+@media (min-width: 1921px) {
+    .timeline-container {
+        max-width: 1400px;
+    }
 }
 
 .timeline-container::after {

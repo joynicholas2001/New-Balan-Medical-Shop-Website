@@ -43,7 +43,7 @@ const Pharmacy = () => {
     };
 
     const filteredProducts = products.filter(p => {
-        const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = (p && p.name && p.name.toLowerCase().includes(searchTerm.toLowerCase()));
         const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
         return matchesSearch && matchesCategory;
     });

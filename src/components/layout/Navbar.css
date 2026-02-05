@@ -43,10 +43,9 @@
 }
 
 .logo-main {
-    font-size: 1.4rem;
+    font-size: clamp(1.1rem, 2vw, 1.4rem);
     font-weight: 800;
     color: #0056b3;
-    /* Strong Blue */
     line-height: 1;
     font-family: 'Outfit', sans-serif;
     letter-spacing: -0.03em;
@@ -54,10 +53,9 @@
 }
 
 .logo-sub {
-    font-size: 0.85rem;
+    font-size: clamp(0.7rem, 1.25vw, 0.85rem);
     font-weight: 600;
     color: #28a745;
-    /* Vibrant Green */
     line-height: 1.2;
     margin-top: 1px;
     font-family: 'Inter', sans-serif;
@@ -71,7 +69,21 @@
 
 @media (min-width: 1200px) {
     .nav-links {
-        gap: 2rem;
+        gap: clamp(1.5rem, 3vw, 2.5rem);
+    }
+}
+
+@media (min-width: 1921px) {
+    .logo-main {
+        font-size: 1.8rem;
+    }
+
+    .logo-sub {
+        font-size: 1rem;
+    }
+
+    .nav-link {
+        font-size: 1.1rem;
     }
 }
 

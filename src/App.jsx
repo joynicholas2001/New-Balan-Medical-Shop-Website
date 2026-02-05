@@ -36,16 +36,16 @@ import ScrollToTop from './components/common/ScrollToTop';
 function AppContent() {
   const location = useLocation();
   const { deliverySettings, getActiveCoupons } = useData();
-  const hideFooter = ['/login', '/profile', '/admin'].includes(location.pathname);
-
-  const isMarqueeRoute = !['/login', '/profile', '/admin'].includes(location.pathname);
+  const hideFooter = ['/login', '/profile', '/admin'].some(path => location.pathname.toLowerCase().startsWith(path));
+  const hideNavbar = ['/login', '/profile', '/admin'].some(path => location.pathname.toLowerCase().startsWith(path));
+  const isMarqueeRoute = !['/login', '/profile', '/admin'].some(path => location.pathname.toLowerCase().startsWith(path));
   const hasActiveCoupons = getActiveCoupons().length > 0;
   const isMarqueeVisible = isMarqueeRoute && hasActiveCoupons && (deliverySettings.showMarquee !== false);
 
   return (
     <div className={`app-container ${isMarqueeVisible ? 'with-marquee' : ''}`}>
       <ScrollToTop />
-      <Navbar />
+      {!hideNavbar && <Navbar />}
       {isMarqueeVisible && <CouponMarquee />}
       <CartDrawer />
       <main className={isMarqueeVisible ? 'has-marquee-offset' : ''}>
